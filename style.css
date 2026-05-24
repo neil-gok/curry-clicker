@@ -89,6 +89,18 @@ header {
 #music-btn { background: rgba(255,255,255,0.05); color: var(--text); border-color: var(--dim); }
 #music-btn:hover { border-color: var(--saffron); }
 
+/* Pulse until music starts */
+#music-btn.needs-click {
+  border-color: var(--saffron);
+  color: var(--saffron);
+  animation: music-nudge 1.4s ease-in-out infinite;
+}
+
+@keyframes music-nudge {
+  0%, 100% { box-shadow: none; }
+  50%       { box-shadow: 0 0 14px rgba(255,153,51,0.7); }
+}
+
 /* ============================================================
    GAME WORLD
    ============================================================ */

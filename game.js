@@ -485,26 +485,67 @@ window.onYouTubeIframeAPIReady = function () {
     videoId: 'x9WO2ieJMYk',
     playerVars: { autoplay: 1, loop: 1, playlist: 'x9WO2ieJMYk', controls: 0, modestbranding: 1, disablekb: 1, fs: 0, iv_load_policy: 3 },
     events: {
-      onReady(e) { e.target.setVolume(55); e.target.playVideo(); musicStarted = true; },
+      onReady(e) {
+        e.target.setVolume(55);
+        // Try unmuted autoplay first; if browser blocks it the pointerdown
+        // listener below will catch the first user gesture and start it.
+        try { e.target.playVideo(); } catch (_) {}
+      },
+      onStateChange(e) {
+        // State 1 = playing — mark as started and remove the hint
+        if (e.data === 1) {
+          musicStarted = true;
+          document.getElementById('music-btn').classList.remove('needs-click');
+        }
+      },
     },
   });
 };
 
 function tryStartMusic() {
   if (musicStarted || !ytPlayer || typeof ytPlayer.playVideo !== 'function') return;
+  ytPlayer.setVolume(55);
   ytPlayer.playVideo();
-  musicStarted = true;
 }
 
 function toggleMusic() {
   if (!ytPlayer) return;
   musicOn = !musicOn;
-  musicOn ? ytPlayer.playVideo() : ytPlayer.pauseVideo();
-  document.getElementById('music-btn').textContent = musicOn ? '♪ ON' : '♪ OFF';
+  if (musicOn) {
+    ytPlayer.playVideo();
+    document.getElementById('music-btn').textContent = '♪ ON';
+  } else {
+    ytPlayer.pauseVideo();
+    document.getElementById('music-btn').textContent = '♪ OFF';
+  }
 }
+
+// Start music on the very first touch/click anywhere on the page
+document.addEventListener('pointerdown', tryStartMusic, { once: true });
 
 // ============================================================
 //  INIT
 // ============================================================
 loadGame();
 render();
+
+// Mark music button as needing a click, show a brief toast
+document.getElementById('music-btn').classList.add('needs-click');
+
+const musicToast = document.createElement('div');
+musicToast.textContent = '🎵 Click anywhere to start music';
+musicToast.style.cssText = [
+  'position:fixed', 'bottom:70px', 'left:50%', 'transform:translateX(-50%)',
+  'font-family:var(--font,monospace)', 'font-size:0.4rem', 'color:#fff',
+  'background:rgba(0,0,0,0.75)', 'border:1px solid rgba(255,153,51,0.5)',
+  'padding:8px 16px', 'border-radius:20px', 'z-index:9999',
+  'pointer-events:none', 'transition:opacity 0.5s',
+].join(';');
+document.body.appendChild(musicToast);
+
+// Remove toast once music starts (checked via the onStateChange handler)
+// Also remove it after 5 seconds regardless
+setTimeout(() => { musicToast.style.opacity = '0'; setTimeout(() => musicToast.remove(), 500); }, 5000);
+document.addEventListener('pointerdown', () => {
+  setTimeout(() => { musicToast.style.opacity = '0'; setTimeout(() => musicToast.remove(), 500); }, 800);
+}, { once: true });
