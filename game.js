@@ -557,60 +557,129 @@ setInterval(saveGame, 30000);
 window.addEventListener('beforeunload', saveGame);
 
 // ============================================================
-//  YOUTUBE MUSIC
+//  MUSIC — Web Audio API tabla synthesizer
+//  Works on all browsers including iOS Safari (same-origin audio
+//  context is unlocked by the user's tap, unlike cross-origin iframes).
 // ============================================================
-let ytPlayer     = null;
-let musicOn      = true;
+let audioCtx    = null;
+let masterGain  = null;
+let droneOscs   = [];
+let musicOn     = true;
 let musicStarted = false;
+let beatTimer   = null;
 
-window.onYouTubeIframeAPIReady = function () {
-  ytPlayer = new YT.Player('yt-player', {
-    videoId: 'x9WO2ieJMYk',
-    // mute:1 lets the video start playing on mobile (muted autoplay is allowed).
-    // We unmute on the first user gesture (clicking Amir to start).
-    playerVars: { autoplay: 1, mute: 1, loop: 1, playlist: 'x9WO2ieJMYk', controls: 0, modestbranding: 1, disablekb: 1, fs: 0, iv_load_policy: 3 },
-    events: {
-      onReady(e) {
-        e.target.setVolume(55);
-        // Desktop: unmute immediately. Mobile: stays muted until user gesture.
-        try { e.target.unMute(); e.target.playVideo(); } catch (_) {}
-      },
-      onStateChange(e) {
-        if (e.data === 1) {
-          // Only mark as started if we're actually audible (not muted)
-          try {
-            if (!ytPlayer.isMuted()) {
-              musicStarted = true;
-              document.getElementById('music-btn').classList.remove('needs-click');
-            }
-          } catch (_) {}
-        }
-      },
-    },
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  masterGain = audioCtx.createGain();
+  masterGain.gain.value = 0.5;
+  masterGain.connect(audioCtx.destination);
+}
+
+// One oscillator hit with pitch + gain envelope — simulates a tabla stroke
+function hit(freq, dur, vol, time, type = 'sine', pitchDrop = true) {
+  const osc = audioCtx.createOscillator();
+  const env = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, time);
+  if (pitchDrop) osc.frequency.exponentialRampToValueAtTime(freq * 0.28, time + dur * 0.65);
+  env.gain.setValueAtTime(vol, time);
+  env.gain.exponentialRampToValueAtTime(0.001, time + dur);
+  osc.connect(env);
+  env.connect(masterGain);
+  osc.start(time);
+  osc.stop(time + dur + 0.01);
+}
+
+// Tanpura-like drone: root A2 (110 Hz) + octaves, filtered to sine-ish timbre
+function startDrone() {
+  if (droneOscs.length) return;
+  [110, 220, 330].forEach((freq, i) => {
+    const osc  = audioCtx.createOscillator();
+    const filt = audioCtx.createBiquadFilter();
+    const gain = audioCtx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.value = freq;
+    filt.type = 'lowpass';
+    filt.frequency.value = 380 + i * 140;
+    filt.Q.value = 6;
+    gain.gain.value = 0.065 / (i + 1);
+    osc.connect(filt); filt.connect(gain); gain.connect(masterGain);
+    osc.start();
+    droneOscs.push(osc);
   });
-};
+}
 
-function tryStartMusic() {
-  if (!ytPlayer || typeof ytPlayer.unMute !== 'function') return;
-  try {
-    ytPlayer.unMute();
-    ytPlayer.setVolume(55);
-    ytPlayer.playVideo();
-    musicStarted = true;
-    document.getElementById('music-btn').classList.remove('needs-click');
-  } catch (_) {}
+// D major pentatonic (works over A drone — typical bhangra/Punjabi feel)
+const SCALE = [293.66, 329.63, 369.99, 440, 493.88, 587.33, 659.25, 739.99];
+const MOTIF = [0, 2, 4, 3, 2, 5, 4, 2, 1, 3, 2, 0, 4, 6, 5, 3];
+let motifIdx = 0;
+
+// Schedule one 2-bar phrase of keherwa-inspired 8-beat tabla pattern
+function scheduleBar(startTime) {
+  if (!musicStarted) return;
+
+  const BPM = 124;
+  const S   = (60 / BPM) / 2;  // one 8th-note duration
+  const t   = startTime;
+
+  // Bayan (low thud) — beats 1, 3, 5, 7 of the 8-beat cycle
+  hit(82, 0.24, 0.85, t);           // "Dha"
+  hit(78, 0.20, 0.65, t + 4*S);    // "Da"
+  hit(82, 0.22, 0.80, t + 8*S);    // "Dha"
+  hit(78, 0.18, 0.60, t + 12*S);   // "Da"
+
+  // Dayan (high "tin" / "dhin")
+  hit(460, 0.10, 0.45, t + 2*S,  'triangle', false);
+  hit(500, 0.09, 0.35, t + 3*S,  'triangle', false);
+  hit(460, 0.10, 0.50, t + 5*S,  'triangle', false);
+  hit(460, 0.09, 0.40, t + 7*S,  'triangle', false);
+  hit(460, 0.10, 0.45, t + 10*S, 'triangle', false);
+  hit(500, 0.09, 0.35, t + 11*S, 'triangle', false);
+  hit(460, 0.10, 0.50, t + 13*S, 'triangle', false);
+  hit(500, 0.09, 0.30, t + 15*S, 'triangle', false);
+
+  // Ghost bayan strokes (quieter off-beats)
+  hit(68, 0.14, 0.28, t + 6*S,  'sine', true);
+  hit(68, 0.14, 0.24, t + 14*S, 'sine', true);
+
+  // Melodic line — 4 notes per 2-bar phrase, cycling through the motif
+  for (let i = 0; i < 4; i++) {
+    const freq = SCALE[MOTIF[motifIdx % MOTIF.length]];
+    motifIdx++;
+    const mt = t + i * 4 * S;
+    hit(freq,       0.38, 0.18, mt, 'triangle', false);
+    hit(freq * 1.5, 0.20, 0.07, mt, 'sine',     false);  // 5th harmonic shimmer
+  }
+
+  // Schedule the next bar lookahead-style to avoid drift
+  const nextStart  = t + 16 * S;
+  const msUntilNext = (nextStart - audioCtx.currentTime) * 1000 - 80;
+  beatTimer = setTimeout(() => {
+    if (musicStarted) scheduleBar(audioCtx.currentTime + 0.08);
+  }, Math.max(0, msUntilNext));
+}
+
+async function tryStartMusic() {
+  if (musicStarted) return;
+  initAudio();
+  // On iOS the AudioContext starts suspended — resume() within a user gesture unlocks it
+  if (audioCtx.state === 'suspended') {
+    try { await audioCtx.resume(); } catch (_) {}
+  }
+  musicStarted = true;
+  document.getElementById('music-btn').classList.remove('needs-click');
+  startDrone();
+  scheduleBar(audioCtx.currentTime + 0.1);
 }
 
 function toggleMusic() {
-  if (!ytPlayer) return;
+  if (!musicStarted) { tryStartMusic(); return; }
   musicOn = !musicOn;
-  if (musicOn) {
-    ytPlayer.playVideo();
-    document.getElementById('music-btn').textContent = '♪ ON';
-  } else {
-    ytPlayer.pauseVideo();
-    document.getElementById('music-btn').textContent = '♪ OFF';
+  if (masterGain) {
+    masterGain.gain.setTargetAtTime(musicOn ? 0.5 : 0, audioCtx.currentTime, 0.4);
   }
+  document.getElementById('music-btn').textContent = musicOn ? '♪ ON' : '♪ OFF';
 }
 
 // ============================================================

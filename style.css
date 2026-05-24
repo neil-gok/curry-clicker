@@ -930,9 +930,3 @@ body.pre-start #amir-char::after {
   }
 }
 
-/* ============================================================
-   HIDDEN YOUTUBE PLAYER
-   ============================================================ */
-#yt-player {
-  position: fixed; left: -9999px; top: -9999px; width: 1px; height: 1px;
-}
