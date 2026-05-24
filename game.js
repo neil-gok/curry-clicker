@@ -52,6 +52,8 @@ const state = {
   nextMilestoneIdx: 0,
 };
 
+let gameStarted = false;
+
 const getB         = id => BUILDINGS.find(b => b.id === id);
 const buildingCost = b  => Math.ceil(b.baseCost * Math.pow(1.15, b.count));
 const totalCps     = () => BUILDINGS.reduce((s, b) => s + b.count * b.baseCps * b.boost, 0);
@@ -227,6 +229,8 @@ function buyUpgrade(id) {
 document.getElementById('amir-char').addEventListener('click', e => {
   e.stopPropagation();
 
+  if (!gameStarted) { startGame(); return; }
+
   incrementCombo();
   const multi = getComboMulti();
   const val   = clickValue() * multi;
@@ -364,6 +368,7 @@ function spawnObstacle() {
 }
 
 function updateObstacles(dt) {
+  if (!gameStarted) return;
   obsTimer += dt;
   if (obsTimer >= nextObs) {
     spawnObstacle();
@@ -450,6 +455,7 @@ requestAnimationFrame(gameLoop);
 
 // CPS income tick — every 100ms
 setInterval(() => {
+  if (!gameStarted) return;
   const gain = totalCps() / 10;
   if (gain > 0) {
     state.curry      += gain;
@@ -472,7 +478,20 @@ setInterval(() => {
 // ============================================================
 let shopOpen = false;
 
+function startGame() {
+  if (gameStarted) return;
+  gameStarted = true;
+  document.body.classList.remove('pre-start');
+  const screen = document.getElementById('start-screen');
+  if (screen) {
+    screen.classList.add('fade-out');
+    setTimeout(() => screen.remove(), 750);
+  }
+  tryStartMusic();
+}
+
 function toggleShop() {
+  if (!gameStarted) return;
   shopOpen = !shopOpen;
   document.getElementById('shop-panel').classList.toggle('open', shopOpen);
   document.getElementById('shop-backdrop').classList.toggle('visible', shopOpen);
@@ -547,19 +566,24 @@ let musicStarted = false;
 window.onYouTubeIframeAPIReady = function () {
   ytPlayer = new YT.Player('yt-player', {
     videoId: 'x9WO2ieJMYk',
-    playerVars: { autoplay: 1, loop: 1, playlist: 'x9WO2ieJMYk', controls: 0, modestbranding: 1, disablekb: 1, fs: 0, iv_load_policy: 3 },
+    // mute:1 lets the video start playing on mobile (muted autoplay is allowed).
+    // We unmute on the first user gesture (clicking Amir to start).
+    playerVars: { autoplay: 1, mute: 1, loop: 1, playlist: 'x9WO2ieJMYk', controls: 0, modestbranding: 1, disablekb: 1, fs: 0, iv_load_policy: 3 },
     events: {
       onReady(e) {
         e.target.setVolume(55);
-        // Try unmuted autoplay first; if browser blocks it the pointerdown
-        // listener below will catch the first user gesture and start it.
-        try { e.target.playVideo(); } catch (_) {}
+        // Desktop: unmute immediately. Mobile: stays muted until user gesture.
+        try { e.target.unMute(); e.target.playVideo(); } catch (_) {}
       },
       onStateChange(e) {
-        // State 1 = playing — mark as started and remove the hint
         if (e.data === 1) {
-          musicStarted = true;
-          document.getElementById('music-btn').classList.remove('needs-click');
+          // Only mark as started if we're actually audible (not muted)
+          try {
+            if (!ytPlayer.isMuted()) {
+              musicStarted = true;
+              document.getElementById('music-btn').classList.remove('needs-click');
+            }
+          } catch (_) {}
         }
       },
     },
@@ -567,9 +591,14 @@ window.onYouTubeIframeAPIReady = function () {
 };
 
 function tryStartMusic() {
-  if (musicStarted || !ytPlayer || typeof ytPlayer.playVideo !== 'function') return;
-  ytPlayer.setVolume(55);
-  ytPlayer.playVideo();
+  if (!ytPlayer || typeof ytPlayer.unMute !== 'function') return;
+  try {
+    ytPlayer.unMute();
+    ytPlayer.setVolume(55);
+    ytPlayer.playVideo();
+    musicStarted = true;
+    document.getElementById('music-btn').classList.remove('needs-click');
+  } catch (_) {}
 }
 
 function toggleMusic() {
@@ -584,32 +613,11 @@ function toggleMusic() {
   }
 }
 
-// Start music on the very first touch/click anywhere on the page
-document.addEventListener('pointerdown', tryStartMusic, { once: true });
-
 // ============================================================
 //  INIT
 // ============================================================
 loadGame();
 render();
 
-// Mark music button as needing a click, show a brief toast
+document.body.classList.add('pre-start');
 document.getElementById('music-btn').classList.add('needs-click');
-
-const musicToast = document.createElement('div');
-musicToast.textContent = '🎵 Click anywhere to start music';
-musicToast.style.cssText = [
-  'position:fixed', 'bottom:70px', 'left:50%', 'transform:translateX(-50%)',
-  'font-family:var(--font,monospace)', 'font-size:0.4rem', 'color:#fff',
-  'background:rgba(0,0,0,0.75)', 'border:1px solid rgba(255,153,51,0.5)',
-  'padding:8px 16px', 'border-radius:20px', 'z-index:9999',
-  'pointer-events:none', 'transition:opacity 0.5s',
-].join(';');
-document.body.appendChild(musicToast);
-
-// Remove toast once music starts (checked via the onStateChange handler)
-// Also remove it after 5 seconds regardless
-setTimeout(() => { musicToast.style.opacity = '0'; setTimeout(() => musicToast.remove(), 500); }, 5000);
-document.addEventListener('pointerdown', () => {
-  setTimeout(() => { musicToast.style.opacity = '0'; setTimeout(() => musicToast.remove(), 500); }, 800);
-}, { once: true });
