@@ -827,6 +827,96 @@ header {
 }
 
 /* ============================================================
+   LIVES DISPLAY
+   ============================================================ */
+#lives-display {
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  line-height: 1;
+}
+
+#lives-display.flash {
+  animation: life-flash 0.45s ease-out forwards;
+}
+
+@keyframes life-flash {
+  0%   { transform: scale(1.6); filter: brightness(0.4) sepia(1) saturate(4) hue-rotate(-30deg); }
+  60%  { transform: scale(1.2); }
+  100% { transform: scale(1);   filter: none; }
+}
+
+/* ============================================================
+   GAME OVER SCREEN
+   ============================================================ */
+#gameover-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(4, 0, 16, 0.9);
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+#gameover-card {
+  text-align: center;
+  padding: 44px 56px;
+  background: rgba(8, 0, 22, 0.98);
+  border: 2px solid var(--red);
+  border-radius: 8px;
+  box-shadow: 0 0 70px rgba(200, 0, 0, 0.45);
+}
+
+#gameover-title {
+  font-size: clamp(1.4rem, 5vw, 2.4rem);
+  color: var(--red);
+  animation: go-glow 0.85s ease-in-out infinite alternate;
+  margin-bottom: 18px;
+}
+
+@keyframes go-glow {
+  from { text-shadow: 0 0 18px var(--red); }
+  to   { text-shadow: 0 0 55px var(--red), 0 0 90px #ff4400; }
+}
+
+#gameover-sub {
+  font-size: clamp(0.27rem, 0.95vw, 0.41rem);
+  color: var(--dim);
+  margin-bottom: 22px;
+  line-height: 2.2;
+}
+
+#gameover-score {
+  font-size: clamp(0.36rem, 1.2vw, 0.52rem);
+  color: var(--text);
+  margin-bottom: 32px;
+}
+
+#go-score {
+  color: var(--gold);
+  text-shadow: 0 0 10px var(--gold);
+}
+
+#gameover-btn {
+  font-family: var(--font);
+  font-size: clamp(0.38rem, 1.2vw, 0.52rem);
+  background: var(--red);
+  color: #fff;
+  border: 2px solid #ff4400;
+  padding: 13px 30px;
+  border-radius: 4px;
+  cursor: pointer;
+  letter-spacing: 2px;
+  transition: all 0.15s;
+}
+
+#gameover-btn:hover {
+  background: #ff2200;
+  box-shadow: 0 0 22px rgba(255, 34, 0, 0.55);
+  transform: scale(1.04);
+}
+
+/* ============================================================
    START SCREEN
    ============================================================ */
 #start-screen {

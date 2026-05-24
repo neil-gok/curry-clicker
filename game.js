@@ -53,6 +53,8 @@ const state = {
 };
 
 let gameStarted = false;
+const MAX_LIVES = 3;
+let lives = MAX_LIVES;
 
 const getB         = id => BUILDINGS.find(b => b.id === id);
 const buildingCost = b  => Math.ceil(b.baseCost * Math.pow(1.15, b.count));
@@ -156,6 +158,38 @@ function renderStats() {
   document.getElementById('shop-total').textContent  = fmt(state.totalCurry);
   document.getElementById('click-val').textContent   = fmt(clickValue());
   document.getElementById('shop-cps').textContent    = cps;
+  renderLives();
+}
+
+function renderLives() {
+  const el = document.getElementById('lives-display');
+  if (!el) return;
+  el.textContent = '❤️'.repeat(Math.max(0, lives)) + '🖤'.repeat(Math.max(0, MAX_LIVES - lives));
+}
+
+function loseLife() {
+  if (!gameStarted || lives <= 0) return;
+  lives--;
+  renderLives();
+  const el = document.getElementById('lives-display');
+  if (el) { el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
+  if (lives <= 0) gameOver();
+}
+
+function gameOver() {
+  gameStarted = false;
+  clearTimeout(beatTimer);
+  beatTimer = null;
+  if (masterGain) masterGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.6);
+  document.getElementById('amir-sprite').style.animationPlayState = 'paused';
+  document.getElementById('go-score').textContent = fmt(state.totalCurry);
+  const goScreen = document.getElementById('gameover-screen');
+  goScreen.style.display = 'flex';
+}
+
+function resetGame() {
+  localStorage.removeItem('cc-save');
+  window.location.reload();
 }
 
 function renderShop() {
@@ -303,20 +337,20 @@ function updateAutoJump(dt) {
 //  OBSTACLES
 // ============================================================
 const OBS_TYPES = [
-  { emoji: '🔥', size: 155, speedM: 0.9,  front: true  },  // Tandoor
-  { emoji: '🐄', size: 135, speedM: 1.0,  front: false },  // Sacred Cow
-  { emoji: '🛺', size: 145, speedM: 1.05, front: true  },  // Rickshaw
-  { emoji: '🌶️', size: 160, speedM: 1.35, front: true  },  // Giant Pepper
-  { emoji: '🏗️', size: 190, speedM: 0.85, front: true  },  // Scaffolding
-  { emoji: '🍛', size: 125, speedM: 1.2,  front: false },  // Curry Pot
-  { emoji: '🐘', size: 170, speedM: 0.75, front: true  },  // Elephant
-  { emoji: '🎡', size: 185, speedM: 0.8,  front: true  },  // Ferris Wheel
-  { emoji: '🧱', size: 155, speedM: 1.1,  front: true  },  // Wall
-  { emoji: '🪘', size: 130, speedM: 1.25, front: false },  // Dhol Drum
-  { emoji: '🐪', size: 170, speedM: 0.95, front: true  },  // Camel
-  { emoji: '🏢', size: 210, speedM: 0.65, front: true  },  // Building
-  { emoji: '🕌', size: 195, speedM: 0.7,  front: true  },  // Temple
-  { emoji: '🐫', size: 175, speedM: 1.0,  front: false },  // Bactrian Camel
+  { emoji: '🔥', size: 210, speedM: 0.9,  front: true  },  // Tandoor
+  { emoji: '🐄', size: 185, speedM: 1.0,  front: false },  // Sacred Cow
+  { emoji: '🛺', size: 200, speedM: 1.05, front: true  },  // Rickshaw
+  { emoji: '🌶️', size: 215, speedM: 1.35, front: true  },  // Giant Pepper
+  { emoji: '🏗️', size: 255, speedM: 0.85, front: true  },  // Scaffolding
+  { emoji: '🍛', size: 170, speedM: 1.2,  front: false },  // Curry Pot
+  { emoji: '🐘', size: 235, speedM: 0.75, front: true  },  // Elephant
+  { emoji: '🎡', size: 250, speedM: 0.8,  front: true  },  // Ferris Wheel
+  { emoji: '🧱', size: 210, speedM: 1.1,  front: true  },  // Wall
+  { emoji: '🪘', size: 175, speedM: 1.25, front: false },  // Dhol Drum
+  { emoji: '🐪', size: 230, speedM: 0.95, front: true  },  // Camel
+  { emoji: '🏢', size: 280, speedM: 0.65, front: true  },  // Building
+  { emoji: '🕌', size: 262, speedM: 0.7,  front: true  },  // Temple
+  { emoji: '🐫', size: 232, speedM: 1.0,  front: false },  // Bactrian Camel
 ];
 
 let obstacles  = [];
@@ -324,13 +358,12 @@ let obsTimer   = 0;
 let nextObs    = 2000;
 
 function worldSpeed() {
-  // 140 → 420 px/s as total curry grows
-  return Math.min(420, 140 + Math.log10(state.totalCurry + 1) * 65);
+  return Math.min(540, 160 + Math.log10(state.totalCurry + 1) * 75);
 }
 
 function obsInterval() {
-  // 2400 → 750 ms between spawns
-  return Math.max(750, 2400 - Math.log10(state.totalCurry + 1) * 210);
+  // 1900ms → 350ms as curry grows — twice as many obstacles as before
+  return Math.max(350, 1900 - Math.log10(state.totalCurry + 1) * 220);
 }
 
 function spawnObstacle() {
@@ -344,19 +377,18 @@ function spawnObstacle() {
   el.style.bottom   = GROUND_H + 'px';
   el.style.zIndex   = type.front ? '8' : '3';
 
-  // Front obstacles block clicks — clicking one breaks combo and deducts curry
+  // Front obstacles block clicks — hitting one loses a life and breaks combo
   if (type.front) {
     el.style.pointerEvents = 'auto';
     el.style.cursor        = 'not-allowed';
     el.addEventListener('click', e => {
       e.stopPropagation();
-      const penalty = Math.max(1, clickValue() * Math.max(1, comboCount));
-      state.curry = Math.max(0, state.curry - penalty);
+      if (!gameStarted) return;
       resetCombo();
       el.classList.add('obstacle-hit');
       setTimeout(() => el.classList.remove('obstacle-hit'), 350);
-      spawnFloat(e.clientX, e.clientY, `-${fmt(penalty)} 🍛 MISS!`, false, true);
-      renderStats();
+      spawnFloat(e.clientX, e.clientY, '💔 -1 LIFE!', false, true);
+      loseLife();
     });
   }
 
