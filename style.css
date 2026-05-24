@@ -69,6 +69,14 @@ header {
 
 .sep { color: var(--dim); margin: 0 6px; }
 
+/* On small screens, drop the title so stats + buttons don't overlap */
+@media (max-width: 520px) {
+  #game-title { display: none; }
+  header { padding: 0 8px; gap: 6px; }
+  #hud-left { gap: 6px; }
+  #hud-right button { padding: 6px 8px; font-size: 0.32rem; }
+}
+
 #hud-right { display: flex; gap: 8px; flex-shrink: 0; }
 
 #hud-right button {
@@ -960,6 +968,39 @@ header {
   color: var(--dim);
   margin-top: 14px;
   letter-spacing: 2px;
+}
+
+/* Instructions panel */
+#start-instructions {
+  position: absolute;
+  top: 44%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.52);
+  border: 1px solid rgba(255, 215, 0, 0.22);
+  border-radius: 6px;
+  padding: 14px 22px;
+}
+
+.instr-row {
+  display: flex;
+  gap: 14px;
+  margin: 4px 0;
+  font-size: clamp(0.26rem, 0.9vw, 0.34rem);
+  line-height: 2.1;
+  white-space: nowrap;
+}
+
+.instr-key {
+  color: var(--gold);
+  text-shadow: 0 0 6px rgba(255, 215, 0, 0.4);
+  min-width: clamp(90px, 15vw, 145px);
+  text-align: right;
+}
+
+.instr-val {
+  color: var(--text);
+  opacity: 0.82;
 }
 
 /* Positioned just above Amir (left: 22% + half of his 84px width) */
