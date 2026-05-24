@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CURRY CLICKER</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="yt-player"></div>
+
+  <!-- ===== HEADER / HUD ===== -->
+  <header>
+    <div id="hud-left">
+      <span id="game-title">🍛 CURRY CLICKER</span>
+      <span id="hud-stats">
+        <span id="curry-count">0</span> CURRY
+        <span class="sep">|</span>
+        <span id="cps-display">0/sec</span>
+      </span>
+    </div>
+    <div id="hud-right">
+      <button id="shop-btn" onclick="toggleShop()">🛒 BAZAAR</button>
+      <button id="music-btn" onclick="toggleMusic()">♪ ON</button>
+    </div>
+  </header>
+
+  <!-- ===== GAME WORLD ===== -->
+  <div id="game-world">
+
+    <!-- Distant skyline silhouettes -->
+    <div id="bg-silhouettes"></div>
+
+    <!-- Scrolling ground -->
+    <div id="ground"></div>
+
+    <!-- Combo counter -->
+    <div id="combo-display"></div>
+
+    <!-- Obstacles container (JS-managed) -->
+    <div id="obstacles-layer"></div>
+
+    <!-- AMIR — CSS cartoon character -->
+    <div id="amir-char">
+      <div id="amir-sprite">
+
+        <!-- Head -->
+        <div class="a-head">
+          <div class="a-cap"><div class="a-cap-dot"></div></div>
+          <div class="a-eye a-eye-l"></div>
+          <div class="a-eye a-eye-r"></div>
+          <div class="a-brow a-brow-l"></div>
+          <div class="a-brow a-brow-r"></div>
+          <div class="a-mustache"></div>
+          <div class="a-smile"></div>
+        </div>
+
+        <!-- Body -->
+        <div class="a-body-row">
+          <div class="a-arm a-arm-l"></div>
+          <div class="a-torso">
+            <div class="a-ue">UE</div>
+            <div class="a-stripe"></div>
+          </div>
+          <div class="a-bag">
+            <div class="a-bag-handle"></div>
+            <div class="a-bag-icon">🍛</div>
+          </div>
+          <div class="a-arm a-arm-r"></div>
+        </div>
+
+        <!-- Legs -->
+        <div class="a-legs">
+          <div class="a-leg a-leg-l"><div class="a-shoe"></div></div>
+          <div class="a-leg a-leg-r"><div class="a-shoe"></div></div>
+        </div>
+
+      </div>
+      <div class="a-shadow"></div>
+    </div>
+
+  </div>
+
+  <!-- ===== SHOP PANEL — slide-out drawer ===== -->
+  <div id="shop-backdrop" onclick="toggleShop()"></div>
+
+  <div id="shop-panel">
+    <div id="shop-header">
+      <span>🛒 THE CURRY BAZAAR</span>
+      <button onclick="toggleShop()">✕ CLOSE</button>
+    </div>
+
+    <div id="shop-stats">
+      <div>Total curry: <span id="shop-total">0</span></div>
+      <div>Per click:   <span id="click-val">1</span></div>
+      <div>Per second:  <span id="shop-cps">0</span></div>
+    </div>
+
+    <div id="shop-scroll">
+      <div class="sec-label">⚡ UPGRADES</div>
+      <div id="upgrades-list"></div>
+      <div class="sec-label">🏗 BUILDINGS</div>
+      <div id="buildings-list"></div>
+    </div>
+  </div>
+
+  <div id="milestone"></div>
+
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script src="game.js"></script>
+</body>
+</html>
