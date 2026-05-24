@@ -830,19 +830,30 @@ header {
    LIVES DISPLAY
    ============================================================ */
 #lives-display {
-  font-size: 0.85rem;
-  letter-spacing: 1px;
+  font-size: clamp(0.6rem, 2vw, 0.88rem);
+  letter-spacing: 3px;
   line-height: 1;
 }
+
+/* CSS ♥ characters — consistent rendering on all platforms */
+.lf { color: #e02020; text-shadow: 0 0 5px rgba(220,0,0,0.55); }
+.le { color: #252525; }
 
 #lives-display.flash {
   animation: life-flash 0.45s ease-out forwards;
 }
 
 @keyframes life-flash {
-  0%   { transform: scale(1.6); filter: brightness(0.4) sepia(1) saturate(4) hue-rotate(-30deg); }
-  60%  { transform: scale(1.2); }
-  100% { transform: scale(1);   filter: none; }
+  0%   { transform: scale(1.5); }
+  60%  { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+/* ============================================================
+   HIDDEN YOUTUBE PLAYER
+   ============================================================ */
+#yt-player {
+  position: fixed; left: -9999px; top: -9999px; width: 1px; height: 1px;
 }
 
 /* ============================================================
