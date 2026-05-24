@@ -254,8 +254,14 @@ const GROUND_H   = 58;   // must match CSS --ground-h
 const GRAVITY    = 0.9;  // px deceleration per frame-unit
 const JUMP_FORCE = 20;   // initial upward velocity
 
-let amirY  = 0;  // px above ground
-let amirVY = 0;  // current vertical velocity
+let amirY     = 0;   // px above ground
+let amirVY    = 0;   // current vertical velocity
+let amirScale = 1.0; // shrinks as curry grows
+
+function applyAmirTransform() {
+  document.getElementById('amir-char').style.transform =
+    `translateY(${-amirY}px) scale(${amirScale})`;
+}
 
 function doJump() {
   if (amirY > 4) return; // already airborne
@@ -267,7 +273,7 @@ function updateJump(dt) {
   const scale = dt / 16;
   amirVY -= GRAVITY * scale;
   amirY   = Math.max(0, amirY + amirVY * scale);
-  document.getElementById('amir-char').style.transform = `translateY(${-amirY}px)`;
+  applyAmirTransform();
   if (amirY <= 0) amirVY = 0;
 }
 
@@ -281,7 +287,11 @@ function updateAutoJump(dt) {
   if (autoJumpTimer >= nextAutoJump) {
     doJump();
     autoJumpTimer = 0;
-    nextAutoJump  = 2200 + Math.random() * 3000;
+    // Jumps get more frequent as curry grows (3–5s → 0.8–1.5s at max)
+    const log = Math.log10(state.totalCurry + 1);
+    const minJ = Math.max(800,  3000 - log * 350);
+    const maxJ = Math.max(1500, 5000 - log * 500);
+    nextAutoJump = minJ + Math.random() * (maxJ - minJ);
   }
 }
 
@@ -299,6 +309,10 @@ const OBS_TYPES = [
   { emoji: '🎡', size: 185, speedM: 0.8,  front: true  },  // Ferris Wheel
   { emoji: '🧱', size: 155, speedM: 1.1,  front: true  },  // Wall
   { emoji: '🪘', size: 130, speedM: 1.25, front: false },  // Dhol Drum
+  { emoji: '🐪', size: 170, speedM: 0.95, front: true  },  // Camel
+  { emoji: '🏢', size: 210, speedM: 0.65, front: true  },  // Building
+  { emoji: '🕌', size: 195, speedM: 0.7,  front: true  },  // Temple
+  { emoji: '🐫', size: 175, speedM: 1.0,  front: false },  // Bactrian Camel
 ];
 
 let obstacles  = [];
@@ -370,6 +384,51 @@ function updateObstacles(dt) {
 }
 
 // ============================================================
+//  AMIR SPEED / SIZE / FIRE — called from 500ms interval
+// ============================================================
+function updateAmirSpeed() {
+  const spd = worldSpeed();           // 140 → 420 px/s
+  const ratio = 140 / spd;           // 1 → 0.333
+  const dur   = Math.max(0.08, 0.3 * ratio).toFixed(3) + 's';
+  const sprite = document.getElementById('amir-sprite');
+  if (sprite) sprite.style.animationDuration = dur;
+  document.querySelectorAll('.a-arm-l, .a-arm-r, .a-leg-l, .a-leg-r, .a-shadow').forEach(el => {
+    el.style.animationDuration = dur;
+  });
+  const ground = document.getElementById('ground');
+  if (ground) ground.style.animationDuration = Math.max(0.18, 0.9 * ratio).toFixed(3) + 's';
+}
+
+function updateAmirSize() {
+  // Scale 1.0 → 0.42 as log10(totalCurry) grows 0 → 7
+  const newScale = Math.max(0.42, 1 - Math.log10(state.totalCurry + 1) * 0.083);
+  if (Math.abs(newScale - amirScale) > 0.004) {
+    amirScale = newScale;
+    applyAmirTransform();
+  }
+}
+
+function updateFire() {
+  const el = document.getElementById('amir-fire');
+  if (!el) return;
+  const t = state.totalCurry;
+  let size = 0;
+  if      (t >= 1000000) size = 88;
+  else if (t >= 100000)  size = 68;
+  else if (t >= 10000)   size = 52;
+  else if (t >= 1000)    size = 38;
+  else if (t >= 100)     size = 28;
+
+  if (size > 0) {
+    el.style.display  = 'block';
+    el.style.fontSize = size + 'px';
+    el.textContent    = '🔥';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+// ============================================================
 //  GAME LOOP  (requestAnimationFrame)
 // ============================================================
 let lastTs = null;
@@ -400,8 +459,13 @@ setInterval(() => {
   }
 }, 100);
 
-// Shop re-render — every 500ms
-setInterval(renderShop, 500);
+// Shop re-render + world scaling — every 500ms
+setInterval(() => {
+  renderShop();
+  updateAmirSpeed();
+  updateAmirSize();
+  updateFire();
+}, 500);
 
 // ============================================================
 //  SHOP TOGGLE

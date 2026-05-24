@@ -284,6 +284,7 @@ header {
   cursor: pointer;
   z-index: 5;
   will-change: transform;
+  transform-origin: bottom center;
 }
 
 #amir-char:hover #amir-sprite {
@@ -582,6 +583,23 @@ header {
   background: #3a3a3a;
   border-radius: 1px 6px 6px 2px;
   border: 1px solid #222;
+}
+
+/* ---- Butt Fire ---- */
+#amir-fire {
+  position: absolute;
+  bottom: 36px;
+  left: -8px;
+  pointer-events: none;
+  display: none;
+  filter: drop-shadow(0 0 8px #ff6600);
+  animation: fire-flicker 0.13s ease-in-out infinite alternate;
+  line-height: 1;
+}
+
+@keyframes fire-flicker {
+  0%   { transform: scaleX(1)    scaleY(1)    rotate(-8deg);  opacity: 0.85; }
+  100% { transform: scaleX(1.25) scaleY(0.75) rotate(8deg);   opacity: 1; }
 }
 
 /* ---- Shadow ---- */
