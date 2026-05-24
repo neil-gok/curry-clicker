@@ -180,8 +180,9 @@ function loseLife() {
 
 function gameOver() {
   gameStarted = false;
-  if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
-    try { ytPlayer.setVolume(0); setTimeout(() => ytPlayer.pauseVideo(), 600); } catch (_) {}
+  if (bgMusic) {
+    bgMusic.volume = 0;
+    setTimeout(() => bgMusic.pause(), 600);
   }
   document.getElementById('amir-sprite').style.animationPlayState = 'paused';
   document.getElementById('go-score').textContent = fmt(state.totalCurry);
@@ -590,58 +591,32 @@ setInterval(saveGame, 30000);
 window.addEventListener('beforeunload', saveGame);
 
 // ============================================================
-//  MUSIC — YouTube IFrame API (Mundian To Bach Ke, Punjabi MC)
+//  MUSIC — HTML5 Audio (works on all browsers including iOS Safari)
+//  audio.play() called within a user gesture is honoured on iOS;
+//  unlike YouTube IFrame postMessage calls, it runs in the same context.
 // ============================================================
-let ytPlayer     = null;
+const bgMusic    = document.getElementById('bg-music');
 let musicOn      = true;
 let musicStarted = false;
 
-window.onYouTubeIframeAPIReady = function () {
-  ytPlayer = new YT.Player('yt-player', {
-    videoId: 'x9WO2ieJMYk',
-    // Start muted so it can buffer/play on load; unmuted on first user gesture
-    playerVars: { autoplay: 1, mute: 1, loop: 1, playlist: 'x9WO2ieJMYk', controls: 0, modestbranding: 1, disablekb: 1, fs: 0, iv_load_policy: 3 },
-    events: {
-      onReady(e) {
-        e.target.setVolume(55);
-        // Desktop: unmute immediately. Mobile: tryStartMusic() handles it.
-        try { e.target.unMute(); e.target.playVideo(); } catch (_) {}
-      },
-      onStateChange(e) {
-        if (e.data === 1) {
-          try {
-            if (!ytPlayer.isMuted()) {
-              musicStarted = true;
-              document.getElementById('music-btn').classList.remove('needs-click');
-            }
-          } catch (_) {}
-        }
-      },
-    },
-  });
-};
-
 function tryStartMusic() {
-  if (!ytPlayer || typeof ytPlayer.unMute !== 'function') return;
-  try {
-    ytPlayer.unMute();
-    ytPlayer.setVolume(55);
-    ytPlayer.playVideo();
+  if (musicStarted || !bgMusic) return;
+  bgMusic.volume = 0.55;
+  bgMusic.play().then(() => {
     musicStarted = true;
     document.getElementById('music-btn').classList.remove('needs-click');
-  } catch (_) {}
+  }).catch(() => {});
 }
 
 function toggleMusic() {
-  if (!ytPlayer) return;
+  if (!bgMusic) return;
   musicOn = !musicOn;
   if (musicOn) {
-    ytPlayer.unMute();
-    ytPlayer.setVolume(55);
-    ytPlayer.playVideo();
+    bgMusic.volume = 0.55;
+    bgMusic.play().catch(() => {});
     document.getElementById('music-btn').textContent = '♪ ON';
   } else {
-    ytPlayer.pauseVideo();
+    bgMusic.pause();
     document.getElementById('music-btn').textContent = '♪ OFF';
   }
 }
