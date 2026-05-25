@@ -666,6 +666,59 @@ header {
 }
 
 /* ============================================================
+   POWER-UPS
+   ============================================================ */
+
+#powerup-hud {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  font-size: 0.42rem;
+  color: var(--gold);
+  text-shadow: 0 0 10px var(--gold);
+  pointer-events: none;
+  z-index: 20;
+  display: none;
+  letter-spacing: 1px;
+}
+
+#slow-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(30, 80, 220, 0.10);
+  pointer-events: none;
+  z-index: 30;
+  display: none;
+}
+
+/* Shield — golden pulse glow on Amir */
+#amir-char.shielded {
+  animation: shield-pulse 0.7s ease-in-out infinite alternate;
+}
+
+@keyframes shield-pulse {
+  from { filter: drop-shadow(0 0 10px var(--gold)); }
+  to   { filter: drop-shadow(0 0 28px var(--gold)) drop-shadow(0 0 10px rgba(255,153,51,0.7)); }
+}
+
+/* Curry Bomb — flash the obstacle layer */
+@keyframes bomb-flash {
+  0%   { background: rgba(255, 220, 0, 0.75); }
+  100% { background: transparent; }
+}
+
+#obstacles-layer.bomb-flash {
+  animation: bomb-flash 0.5s ease-out forwards;
+}
+
+/* Active power-up shop card */
+.shop-item.power-active {
+  border-color: var(--gold) !important;
+  opacity: 0.65;
+  cursor: default;
+}
+
+/* ============================================================
    SHOP PANEL — slide-out drawer from right
    ============================================================ */
 #shop-backdrop {

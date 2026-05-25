@@ -58,6 +58,10 @@ let lives = MAX_LIVES;
 const REVIVE_MAX = 2;
 let revivesBought = 0;
 
+let shieldActive = false;
+let slowActive   = false;
+let slowTimeLeft = 0; // ms
+
 const getB         = id => BUILDINGS.find(b => b.id === id);
 const buildingCost = b  => Math.ceil(b.baseCost * Math.pow(1.15, b.count));
 const totalCps     = () => BUILDINGS.reduce((s, b) => s + b.count * b.baseCps * b.boost, 0);
@@ -217,18 +221,55 @@ function renderShop() {
     }).join('');
   }
 
-  // Revival
+  // Power-ups
   const powersEl = document.getElementById('powers-list');
   if (powersEl) {
+    const items = [
+      {
+        emoji: '🛡️', name: "Amir's Shield",
+        desc: shieldActive ? 'Active — absorbs next hit' : 'Absorb the next obstacle hit',
+        cost: shieldCost(), active: shieldActive, disabled: shieldActive || !gameStarted,
+        fn: 'buyShield()',
+      },
+      {
+        emoji: '🐢', name: 'Slow Scroll',
+        desc: slowActive ? `Active — ${Math.ceil(slowTimeLeft / 1000)}s left` : 'Halve world speed for 6s',
+        cost: slowCost(), active: slowActive, disabled: slowActive || !gameStarted,
+        fn: 'buySlow()',
+      },
+      {
+        emoji: '💥', name: 'Curry Bomb',
+        desc: 'Blast all obstacles off-screen',
+        cost: bombCost(), active: false, disabled: !gameStarted,
+        fn: 'buyCurryBomb()',
+      },
+    ];
+    powersEl.innerHTML = items.map(item => {
+      const ok = !item.disabled && state.curry >= item.cost;
+      return `<div class="shop-item${ok ? ' can-afford' : ''}${item.active ? ' power-active' : ''}" onclick="${item.fn}">
+        <span class="s-emoji">${item.emoji}</span>
+        <div class="s-info">
+          <div class="s-name">${item.name}</div>
+          <div class="s-desc">${item.desc}</div>
+          <span class="upg-tag">POWER</span>
+        </div>
+        <div class="s-cost">${item.active ? '✓ ACTIVE' : '🍛' + fmt(item.cost)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Revival
+  const revivalEl = document.getElementById('revival-list');
+  if (revivalEl) {
     const remaining = REVIVE_MAX - revivesBought;
     const cost = reviveCost();
     if (lives >= MAX_LIVES) {
-      powersEl.innerHTML = '<p class="empty-msg">Full health — no revival needed!</p>';
+      revivalEl.innerHTML = '<p class="empty-msg">Full health — no revival needed!</p>';
     } else if (remaining <= 0) {
-      powersEl.innerHTML = '<p class="empty-msg">No revivals remaining this run.</p>';
+      revivalEl.innerHTML = '<p class="empty-msg">No revivals remaining this run.</p>';
     } else {
       const ok = state.curry >= cost;
-      powersEl.innerHTML = `<div class="shop-item${ok ? ' can-afford' : ''}" onclick="buyRevive()">
+      revivalEl.innerHTML = `<div class="shop-item${ok ? ' can-afford' : ''}" onclick="buyRevive()">
         <span class="s-emoji">❤️</span>
         <div class="s-info">
           <div class="s-name">Second Wind</div>
@@ -282,6 +323,56 @@ function buyRevive() {
   lives++;
   renderLives();
   render();
+}
+
+// ============================================================
+//  POWER-UPS
+// ============================================================
+function shieldCost() { return Math.max(300,  Math.floor(state.totalCurry * 0.08)); }
+function slowCost()   { return Math.max(500,  Math.floor(state.totalCurry * 0.12)); }
+function bombCost()   { return Math.max(1000, Math.floor(state.totalCurry * 0.20)); }
+
+function buyShield() {
+  const cost = shieldCost();
+  if (shieldActive || !gameStarted || state.curry < cost) return;
+  state.curry -= cost;
+  shieldActive = true;
+  document.getElementById('amir-char').classList.add('shielded');
+  updatePowerupHud();
+  render();
+}
+
+function buySlow() {
+  const cost = slowCost();
+  if (slowActive || !gameStarted || state.curry < cost) return;
+  state.curry -= cost;
+  slowActive   = true;
+  slowTimeLeft = 6000;
+  document.getElementById('slow-overlay').style.display = 'block';
+  updatePowerupHud();
+  render();
+}
+
+function buyCurryBomb() {
+  const cost = bombCost();
+  if (!gameStarted || state.curry < cost) return;
+  state.curry -= cost;
+  obstacles.forEach(o => o.el.remove());
+  obstacles.length = 0;
+  const layer = document.getElementById('obstacles-layer');
+  layer.classList.add('bomb-flash');
+  setTimeout(() => layer.classList.remove('bomb-flash'), 500);
+  render();
+}
+
+function updatePowerupHud() {
+  const el = document.getElementById('powerup-hud');
+  if (!el) return;
+  const parts = [];
+  if (shieldActive) parts.push('🛡️ SHIELD');
+  if (slowActive)   parts.push('🐢 ' + Math.ceil(slowTimeLeft / 1000) + 's');
+  el.textContent   = parts.join('  ·  ');
+  el.style.display = parts.length ? 'block' : 'none';
 }
 
 function buyUpgrade(id) {
@@ -399,7 +490,8 @@ let obsTimer   = 0;
 let nextObs    = 2000;
 
 function worldSpeed() {
-  return Math.min(540, 160 + Math.log10(state.totalCurry + 1) * 75);
+  const base = Math.min(540, 160 + Math.log10(state.totalCurry + 1) * 75);
+  return slowActive ? base * 0.45 : base;
 }
 
 function obsInterval() {
@@ -425,6 +517,16 @@ function spawnObstacle() {
     el.addEventListener('click', e => {
       e.stopPropagation();
       if (!gameStarted) return;
+      if (shieldActive) {
+        shieldActive = false;
+        document.getElementById('amir-char').classList.remove('shielded');
+        el.classList.add('obstacle-hit');
+        setTimeout(() => el.classList.remove('obstacle-hit'), 350);
+        spawnFloat(e.clientX, e.clientY, '🛡️ BLOCKED!', true, false);
+        updatePowerupHud();
+        renderShop();
+        return;
+      }
       resetCombo();
       el.classList.add('obstacle-hit');
       setTimeout(() => el.classList.remove('obstacle-hit'), 350);
@@ -515,6 +617,16 @@ function gameLoop(ts) {
   if (!lastTs) lastTs = ts;
   const dt = Math.min(ts - lastTs, 50); // cap at 50ms to handle tab focus-loss
   lastTs = ts;
+
+  if (slowActive) {
+    slowTimeLeft -= dt;
+    if (slowTimeLeft <= 0) {
+      slowActive = false;
+      slowTimeLeft = 0;
+      document.getElementById('slow-overlay').style.display = 'none';
+    }
+    updatePowerupHud();
+  }
 
   updateJump(dt);
   updateAutoJump(dt);
