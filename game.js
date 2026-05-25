@@ -55,6 +55,8 @@ const state = {
 let gameStarted = false;
 const MAX_LIVES = 3;
 let lives = MAX_LIVES;
+const REVIVE_MAX = 2;
+let revivesBought = 0;
 
 const getB         = id => BUILDINGS.find(b => b.id === id);
 const buildingCost = b  => Math.ceil(b.baseCost * Math.pow(1.15, b.count));
@@ -215,6 +217,29 @@ function renderShop() {
     }).join('');
   }
 
+  // Revival
+  const powersEl = document.getElementById('powers-list');
+  if (powersEl) {
+    const remaining = REVIVE_MAX - revivesBought;
+    const cost = reviveCost();
+    if (lives >= MAX_LIVES) {
+      powersEl.innerHTML = '<p class="empty-msg">Full health — no revival needed!</p>';
+    } else if (remaining <= 0) {
+      powersEl.innerHTML = '<p class="empty-msg">No revivals remaining this run.</p>';
+    } else {
+      const ok = state.curry >= cost;
+      powersEl.innerHTML = `<div class="shop-item${ok ? ' can-afford' : ''}" onclick="buyRevive()">
+        <span class="s-emoji">❤️</span>
+        <div class="s-info">
+          <div class="s-name">Second Wind</div>
+          <div class="s-desc">Restore 1 life · ${remaining} left this run</div>
+          <span class="upg-tag">REVIVAL</span>
+        </div>
+        <div class="s-cost">🍛${fmt(cost)}</div>
+      </div>`;
+    }
+  }
+
   // Buildings
   document.getElementById('buildings-list').innerHTML = BUILDINGS.map(b => {
     const cost = buildingCost(b);
@@ -242,6 +267,20 @@ function buyBuilding(id) {
   if (state.curry < cost) return;
   state.curry -= cost;
   b.count++;
+  render();
+}
+
+function reviveCost() {
+  return Math.max(200, Math.floor(state.totalCurry * 0.1)) * (revivesBought + 1);
+}
+
+function buyRevive() {
+  const cost = reviveCost();
+  if (lives >= MAX_LIVES || revivesBought >= REVIVE_MAX || state.curry < cost) return;
+  state.curry -= cost;
+  revivesBought++;
+  lives++;
+  renderLives();
   render();
 }
 
