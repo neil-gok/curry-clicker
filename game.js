@@ -421,8 +421,8 @@ document.getElementById('amir-char').addEventListener('click', e => {
 //  JUMP PHYSICS
 // ============================================================
 const GROUND_H   = 58;   // must match CSS --ground-h
-const GRAVITY    = 0.9;  // px deceleration per frame-unit
-const JUMP_FORCE = 20;   // initial upward velocity
+const GRAVITY    = 0.7;  // px deceleration per frame-unit
+const JUMP_FORCE = 24;   // initial upward velocity
 
 let amirY     = 0;   // px above ground
 let amirVY    = 0;   // current vertical velocity
@@ -471,12 +471,12 @@ function updateAutoJump(dt) {
 // ============================================================
 const OBS_TYPES = [
   // Ground hazards — potholes (jump over them)
-  { type: 'pothole', width: 80,  speedM: 1.05, front: true  },
-  { type: 'pothole', width: 105, speedM: 1.0,  front: true  },
-  { type: 'pothole', width: 130, speedM: 0.95, front: true  },
-  { type: 'pothole', width: 155, speedM: 0.9,  front: true  },
-  { type: 'pothole', width: 85,  speedM: 1.1,  front: true  },
-  { type: 'pothole', width: 115, speedM: 1.0,  front: true  },
+  { type: 'pothole', width: 40,  speedM: 1.05, front: true  },
+  { type: 'pothole', width: 55,  speedM: 1.0,  front: true  },
+  { type: 'pothole', width: 70,  speedM: 0.95, front: true  },
+  { type: 'pothole', width: 85,  speedM: 0.9,  front: true  },
+  { type: 'pothole', width: 45,  speedM: 1.1,  front: true  },
+  { type: 'pothole', width: 100, speedM: 1.0,  front: true  },
   // Background scenery — decorative only, no collision
   { type: 'scenery', emoji: '🐄', size: 110, speedM: 0.65, front: false },
   { type: 'scenery', emoji: '🐪', size: 100, speedM: 0.75, front: false },
