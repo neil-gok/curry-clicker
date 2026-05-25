@@ -429,8 +429,9 @@ let amirVY    = 0;   // current vertical velocity
 let amirScale = 1.0; // shrinks as curry grows
 
 function applyAmirTransform() {
-  document.getElementById('amir-char').style.transform =
-    `translateY(${-amirY}px) scale(${amirScale})`;
+  const el = document.getElementById('amir-char');
+  el.style.transform = `translateY(${-amirY}px) scale(${amirScale})`;
+  el.style.zIndex    = amirY > 20 ? '9' : '5';
 }
 
 function doJump() {
@@ -480,8 +481,8 @@ const OBS_TYPES = [
   { emoji: '🧱', size: 210, speedM: 1.1,  front: true  },  // Wall
   { emoji: '🪘', size: 175, speedM: 1.25, front: false },  // Dhol Drum
   { emoji: '🐪', size: 230, speedM: 0.95, front: true  },  // Camel
-  { emoji: '🏢', size: 280, speedM: 0.65, front: true  },  // Building
-  { emoji: '🕌', size: 262, speedM: 0.7,  front: true  },  // Temple
+  { emoji: '🏢', size: 195, speedM: 0.65, front: true  },  // Building
+  { emoji: '🕌', size: 195, speedM: 0.7,  front: true  },  // Temple
   { emoji: '🐫', size: 232, speedM: 1.0,  front: false },  // Bactrian Camel
 ];
 
@@ -510,36 +511,26 @@ function spawnObstacle() {
   el.style.bottom   = GROUND_H + 'px';
   el.style.zIndex   = type.front ? '8' : '3';
 
-  // Front obstacles block clicks — hitting one loses a life and breaks combo
+  // Front obstacles block Amir clicks — damage now comes from positional collision
   if (type.front) {
     el.style.pointerEvents = 'auto';
     el.style.cursor        = 'not-allowed';
-    el.addEventListener('click', e => {
-      e.stopPropagation();
-      if (!gameStarted) return;
-      if (shieldActive) {
-        shieldActive = false;
-        document.getElementById('amir-char').classList.remove('shielded');
-        el.classList.add('obstacle-hit');
-        setTimeout(() => el.classList.remove('obstacle-hit'), 350);
-        spawnFloat(e.clientX, e.clientY, '🛡️ BLOCKED!', true, false);
-        updatePowerupHud();
-        renderShop();
-        return;
-      }
-      resetCombo();
-      el.classList.add('obstacle-hit');
-      setTimeout(() => el.classList.remove('obstacle-hit'), 350);
-      spawnFloat(e.clientX, e.clientY, '💔 -1 LIFE!', false, true);
-      loseLife();
-    });
+    el.addEventListener('click', e => e.stopPropagation());
   }
 
   const startX = window.innerWidth + 80;
   el.style.left = startX + 'px';
   layer.appendChild(el);
 
-  obstacles.push({ el, x: startX, speedM: type.speedM });
+  obstacles.push({
+    el,
+    x:       startX,
+    speedM:  type.speedM,
+    front:   type.front,
+    visualH: Math.round(type.size * 0.72),
+    visualW: Math.round(type.size * 0.70),
+    damaged: false,
+  });
 }
 
 function updateObstacles(dt) {
@@ -561,6 +552,104 @@ function updateObstacles(dt) {
       obstacles.splice(i, 1);
     }
   }
+}
+
+// ============================================================
+//  POSITIONAL COLLISION — auto-damage when obstacle overlaps Amir on ground
+// ============================================================
+let hitInvincibleTime = 0;
+
+function checkObstacleCollisions() {
+  if (!gameStarted || hitInvincibleTime > 0) return;
+  const amirLeft  = window.innerWidth * 0.22;
+  const amirRight = amirLeft + 84;
+
+  for (const o of obstacles) {
+    if (!o.front || o.damaged) continue;
+    if (o.x + o.visualW < amirLeft - 15) continue;
+    if (o.x > amirRight + 15) continue;
+    if (amirY >= o.visualH) continue;  // jumped over
+
+    o.damaged = true;
+    const fx = amirLeft + 42;
+    const fy = window.innerHeight - GROUND_H - amirY - 60;
+
+    if (shieldActive) {
+      shieldActive = false;
+      document.getElementById('amir-char').classList.remove('shielded');
+      o.el.classList.add('obstacle-hit');
+      setTimeout(() => o.el.classList.remove('obstacle-hit'), 350);
+      spawnFloat(fx, fy, '🛡️ BLOCKED!', true, false);
+      updatePowerupHud();
+      renderShop();
+      return;
+    }
+
+    hitInvincibleTime = 1000;
+    resetCombo();
+    spawnFloat(fx, fy, '💔 -1 LIFE!', false, true);
+    loseLife();
+    o.el.classList.add('obstacle-hit');
+    setTimeout(() => o.el.classList.remove('obstacle-hit'), 350);
+    return;
+  }
+}
+
+// ============================================================
+//  GOLDEN CURRY BOWL
+// ============================================================
+let goldenBowl      = null;
+let goldenBowlTimer = 0;
+let nextGoldenBowl  = 45000 + Math.random() * 45000;
+const GOLDEN_LIFETIME = 9000;
+
+function goldenBowlValue() {
+  return Math.max(500, Math.floor(totalCps() * 120));
+}
+
+function spawnGoldenBowl() {
+  if (goldenBowl) return;
+  const el  = document.createElement('div');
+  el.className  = 'golden-bowl';
+  el.textContent = '🍛';
+  const startX  = window.innerWidth + 80;
+  el.style.left = startX + 'px';
+  const val = goldenBowlValue();
+  el.addEventListener('click', e => {
+    e.stopPropagation();
+    if (!gameStarted || !goldenBowl) return;
+    state.curry      += val;
+    state.totalCurry += val;
+    spawnFloat(e.clientX, e.clientY, `✨ +${fmt(val)} 🍛 GOLDEN!`, true, false);
+    removeGoldenBowl();
+    checkMilestones();
+    renderStats();
+  });
+  document.getElementById('obstacles-layer').appendChild(el);
+  goldenBowl = { el, x: startX, timeLeft: GOLDEN_LIFETIME };
+  showMilestone('✨ GOLDEN CURRY! Quick, click it!');
+}
+
+function removeGoldenBowl() {
+  if (!goldenBowl) return;
+  goldenBowl.el.remove();
+  goldenBowl = null;
+}
+
+function updateGoldenBowl(dt) {
+  if (!gameStarted) return;
+  goldenBowlTimer += dt;
+  if (goldenBowlTimer >= nextGoldenBowl) {
+    spawnGoldenBowl();
+    goldenBowlTimer = 0;
+    nextGoldenBowl = 45000 + Math.random() * 45000;
+  }
+  if (!goldenBowl) return;
+  const spd = worldSpeed() * 0.7 * (dt / 1000);
+  goldenBowl.x -= spd;
+  goldenBowl.el.style.left = goldenBowl.x + 'px';
+  goldenBowl.timeLeft -= dt;
+  if (goldenBowl.timeLeft <= 0 || goldenBowl.x < -150) removeGoldenBowl();
 }
 
 // ============================================================
@@ -628,9 +717,13 @@ function gameLoop(ts) {
     updatePowerupHud();
   }
 
+  if (hitInvincibleTime > 0) hitInvincibleTime = Math.max(0, hitInvincibleTime - dt);
+
   updateJump(dt);
   updateAutoJump(dt);
   updateObstacles(dt);
+  checkObstacleCollisions();
+  updateGoldenBowl(dt);
   checkComboTimeout();
 
   requestAnimationFrame(gameLoop);
@@ -777,6 +870,14 @@ function toggleMusic() {
 // ============================================================
 loadGame();
 render();
+
+// Jump — Space bar or tap anywhere on the game world (Amir/obstacle clicks stop propagation)
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); if (gameStarted) doJump(); }
+});
+document.getElementById('game-world').addEventListener('click', () => {
+  if (gameStarted) doJump();
+});
 
 document.body.classList.add('pre-start');
 document.getElementById('music-btn').classList.add('needs-click');

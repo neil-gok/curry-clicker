@@ -719,6 +719,50 @@ header {
 }
 
 /* ============================================================
+   GOLDEN CURRY BOWL
+   ============================================================ */
+.golden-bowl {
+  position: absolute;
+  font-size: 85px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 15;
+  bottom: calc(var(--ground-h) + 60px);
+  will-change: left;
+  user-select: none;
+  animation: bowl-float 0.9s ease-in-out infinite alternate;
+}
+
+.golden-bowl::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 5%;
+  width: 90%;
+  height: 4px;
+  background: linear-gradient(90deg, #ff4400, #ffcc00, gold);
+  border-radius: 2px;
+  transform-origin: left;
+  animation: bowl-fuse 9s linear forwards;
+}
+
+@keyframes bowl-float {
+  from {
+    transform: translateY(0) scale(1);
+    filter: drop-shadow(0 0 18px gold) drop-shadow(0 0 36px #ff8800);
+  }
+  to {
+    transform: translateY(-14px) scale(1.06);
+    filter: drop-shadow(0 0 38px gold) drop-shadow(0 0 65px #ffcc00) brightness(1.2);
+  }
+}
+
+@keyframes bowl-fuse {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+
+/* ============================================================
    SHOP PANEL — slide-out drawer from right
    ============================================================ */
 #shop-backdrop {
