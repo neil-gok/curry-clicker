@@ -542,23 +542,59 @@ header {
 .a-leg {
   width: 24px;
   height: 34px;
-  background: linear-gradient(180deg, #f5f2e5 0%, #e8e2cc 100%);
+  background: linear-gradient(180deg, #C4793A 0%, #b06828 100%);
   border-radius: 0 0 6px 6px;
   transform-origin: top center;
   position: relative;
-  border: 1px solid #cec6a8;
 }
 
-/* Dhoti gather/fold at the bottom of each leg */
-.a-leg::before {
+/* ---- Dhoti — white draped skirt covering both legs ---- */
+.a-dhoti {
+  position: absolute;
+  top: -2px;
+  left: -6px;
+  width: 63px;
+  height: 30px;
+  background:
+    /* vertical pleat / fold lines */
+    linear-gradient(90deg,
+      transparent 13px,
+      rgba(150,135,90,0.28) 13px, rgba(150,135,90,0.28) 14px,
+      transparent 14px, transparent 30px,
+      rgba(150,135,90,0.20) 30px, rgba(150,135,90,0.20) 31px,
+      transparent 31px, transparent 48px,
+      rgba(150,135,90,0.28) 48px, rgba(150,135,90,0.28) 49px,
+      transparent 49px
+    ),
+    linear-gradient(180deg, #f8f5ea 0%, #ece6d0 65%, #e4ddc8 100%);
+  border: 1px solid #cec6a8;
+  border-top: 2px solid #d0c8a8;
+  border-radius: 0 0 10px 10px;
+  z-index: 2;
+}
+
+/* Gold hem border — traditional dhoti trim */
+.a-dhoti::after {
   content: '';
   position: absolute;
-  bottom: 4px;
-  left: 2px;
-  right: 2px;
-  height: 3px;
-  background: rgba(180, 165, 120, 0.45);
-  border-radius: 2px;
+  bottom: 0;
+  left: 3px; right: 3px;
+  height: 4px;
+  background: linear-gradient(90deg, #b89010, #ffd700, #ffe566, #ffd700, #b89010);
+  border-radius: 0 0 10px 10px;
+}
+
+/* Centre-front pleat / tuck */
+.a-dhoti::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 5px;
+  height: 23px;
+  background: rgba(150,135,90,0.3);
+  border-radius: 2px 2px 0 0;
 }
 
 .a-leg-l { animation: leg-l 0.3s ease-in-out infinite; }
