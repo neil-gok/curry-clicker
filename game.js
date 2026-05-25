@@ -470,20 +470,18 @@ function updateAutoJump(dt) {
 //  OBSTACLES
 // ============================================================
 const OBS_TYPES = [
-  { emoji: '🔥', size: 210, speedM: 0.9,  front: true  },  // Tandoor
-  { emoji: '🐄', size: 185, speedM: 1.0,  front: false },  // Sacred Cow
-  { emoji: '🛺', size: 200, speedM: 1.05, front: true  },  // Rickshaw
-  { emoji: '🌶️', size: 215, speedM: 1.35, front: true  },  // Giant Pepper
-  { emoji: '🏗️', size: 255, speedM: 0.85, front: true  },  // Scaffolding
-  { emoji: '🍛', size: 170, speedM: 1.2,  front: false },  // Curry Pot
-  { emoji: '🐘', size: 235, speedM: 0.75, front: true  },  // Elephant
-  { emoji: '🎡', size: 250, speedM: 0.8,  front: true  },  // Ferris Wheel
-  { emoji: '🧱', size: 210, speedM: 1.1,  front: true  },  // Wall
-  { emoji: '🪘', size: 175, speedM: 1.25, front: false },  // Dhol Drum
-  { emoji: '🐪', size: 230, speedM: 0.95, front: true  },  // Camel
-  { emoji: '🏢', size: 195, speedM: 0.65, front: true  },  // Building
-  { emoji: '🕌', size: 195, speedM: 0.7,  front: true  },  // Temple
-  { emoji: '🐫', size: 232, speedM: 1.0,  front: false },  // Bactrian Camel
+  // Ground hazards — potholes (jump over them)
+  { type: 'pothole', width: 80,  speedM: 1.05, front: true  },
+  { type: 'pothole', width: 105, speedM: 1.0,  front: true  },
+  { type: 'pothole', width: 130, speedM: 0.95, front: true  },
+  { type: 'pothole', width: 155, speedM: 0.9,  front: true  },
+  { type: 'pothole', width: 85,  speedM: 1.1,  front: true  },
+  { type: 'pothole', width: 115, speedM: 1.0,  front: true  },
+  // Background scenery — decorative only, no collision
+  { type: 'scenery', emoji: '🐄', size: 110, speedM: 0.65, front: false },
+  { type: 'scenery', emoji: '🐪', size: 100, speedM: 0.75, front: false },
+  { type: 'scenery', emoji: '🐫', size: 108, speedM: 0.7,  front: false },
+  { type: 'scenery', emoji: '🐘', size: 118, speedM: 0.6,  front: false },
 ];
 
 let obstacles  = [];
@@ -501,24 +499,22 @@ function obsInterval() {
 }
 
 function spawnObstacle() {
-  const type  = OBS_TYPES[Math.floor(Math.random() * OBS_TYPES.length)];
-  const layer = document.getElementById('obstacles-layer');
+  const type   = OBS_TYPES[Math.floor(Math.random() * OBS_TYPES.length)];
+  const layer  = document.getElementById('obstacles-layer');
+  const el     = document.createElement('div');
+  const startX = window.innerWidth + 80;
 
-  const el = document.createElement('div');
-  el.className      = 'obstacle';
-  el.textContent    = type.emoji;
-  el.style.fontSize = type.size + 'px';
-  el.style.bottom   = GROUND_H + 'px';
-  el.style.zIndex   = type.front ? '8' : '3';
-
-  // Front obstacles block Amir clicks — damage now comes from positional collision
-  if (type.front) {
-    el.style.pointerEvents = 'auto';
-    el.style.cursor        = 'not-allowed';
-    el.addEventListener('click', e => e.stopPropagation());
+  if (type.type === 'pothole') {
+    el.className   = 'pothole';
+    el.style.width = type.width + 'px';
+  } else {
+    el.className      = 'obstacle';
+    el.textContent    = type.emoji;
+    el.style.fontSize = type.size + 'px';
+    el.style.bottom   = GROUND_H + 'px';
+    el.style.zIndex   = '3';
   }
 
-  const startX = window.innerWidth + 80;
   el.style.left = startX + 'px';
   layer.appendChild(el);
 
@@ -527,8 +523,8 @@ function spawnObstacle() {
     x:       startX,
     speedM:  type.speedM,
     front:   type.front,
-    visualH: Math.round(type.size * 0.72),
-    visualW: Math.round(type.size * 0.70),
+    visualH: type.type === 'pothole' ? 45 : 0,
+    visualW: type.type === 'pothole' ? type.width : Math.round((type.size || 100) * 0.7),
     damaged: false,
   });
 }

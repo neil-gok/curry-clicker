@@ -275,6 +275,66 @@ header {
   animation: obs-punish 0.35s ease-out;
 }
 
+/* ============================================================
+   POTHOLES
+   ============================================================ */
+.pothole {
+  position: absolute;
+  bottom: 4px;
+  height: 42px;
+  border-radius: 50%;
+  z-index: 3;
+  pointer-events: none;
+  will-change: left;
+  user-select: none;
+  background:
+    radial-gradient(ellipse 82% 65% at 50% 38%,
+      #000 25%,
+      #0c0520 55%,
+      #220e08 78%,
+      transparent 100%
+    );
+  box-shadow:
+    0 -4px 12px rgba(0,0,0,0.85),
+    inset 0 3px 10px rgba(0,0,0,0.95);
+}
+
+/* Raised cracked rim */
+.pothole::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: -7px;
+  right: -7px;
+  height: 13px;
+  background: linear-gradient(180deg, #8b3800 0%, #5a2000 100%);
+  border-radius: 50%;
+  border-top: 2px solid #c05200;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+}
+
+/* Subtle inner pit-glow */
+.pothole::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 20%;
+  right: 20%;
+  height: 7px;
+  background: radial-gradient(ellipse, rgba(160,50,0,0.35) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: pit-glow 2.2s ease-in-out infinite alternate;
+}
+
+@keyframes pit-glow {
+  from { opacity: 0.3; }
+  to   { opacity: 0.9; }
+}
+
+.pothole.obstacle-hit {
+  animation: obs-punish 0.35s ease-out;
+}
+
 @keyframes obs-punish {
   0%   { filter: drop-shadow(0 6px 12px rgba(0,0,0,0.6)); transform: scale(1); }
   40%  { filter: brightness(1.8) drop-shadow(0 0 18px #ff2200); transform: scale(1.15); }
