@@ -397,6 +397,7 @@ document.getElementById('amir-char').addEventListener('click', e => {
 
   if (!gameStarted) { startGame(); return; }
 
+  doJump();
   incrementCombo();
   const multi = getComboMulti();
   const val   = clickValue() * multi;
@@ -564,9 +565,9 @@ function checkObstacleCollisions() {
     if (!o.front || o.damaged) continue;
     if (o.x + o.visualW < amirLeft - 15) continue;
     if (o.x > amirRight + 15) continue;
-    if (amirY >= o.visualH) continue;  // jumped over
 
-    o.damaged = true;
+    o.damaged = true;          // mark on first entry — prevents landing-damage
+    if (amirY >= o.visualH) continue;  // already airborne, cleared safely
     const fx = amirLeft + 42;
     const fy = window.innerHeight - GROUND_H - amirY - 60;
 
