@@ -1,880 +1,736 @@
-'use strict';
+// =====================================================
+// CURRY EMPIRE — Data
+// =====================================================
 
-// ============================================================
-//  BUILDINGS
-// ============================================================
-const BUILDINGS = [
-  { id: 'bike',        name: "Amir's Bike",      emoji: '🛵', baseCost: 10,       baseCps: 0.1,   desc: '0.1/sec',   count: 0, boost: 1 },
-  { id: 'chapati',     name: 'Chapati Stand',    emoji: '🫓', baseCost: 100,      baseCps: 0.5,   desc: '0.5/sec',   count: 0, boost: 1 },
-  { id: 'tandoor',     name: 'Tandoor',          emoji: '🔥', baseCost: 500,      baseCps: 3,     desc: '3/sec',     count: 0, boost: 1 },
-  { id: 'curryhouse',  name: 'Curry House',      emoji: '🍛', baseCost: 2000,     baseCps: 15,    desc: '15/sec',    count: 0, boost: 1 },
-  { id: 'spicemarket', name: 'Spice Market',     emoji: '🌶️', baseCost: 10000,    baseCps: 80,    desc: '80/sec',    count: 0, boost: 1 },
-  { id: 'bollywood',   name: 'Bollywood Studio', emoji: '🎬', baseCost: 50000,    baseCps: 500,   desc: '500/sec',   count: 0, boost: 1 },
-  { id: 'taj',         name: 'Taj Mahal',        emoji: '🕌', baseCost: 500000,   baseCps: 3000,  desc: '3,000/sec', count: 0, boost: 1 },
-  { id: 'dimension',   name: 'Curry Dimension',  emoji: '🌀', baseCost: 10000000, baseCps: 50000, desc: '50K/sec',   count: 0, boost: 1 },
-];
-
-// ============================================================
-//  UPGRADES
-// ============================================================
-const UPGRADES = [
-  { id: 'ladle',     name: 'Golden Ladle',    emoji: '🥄', cost: 50,     desc: '2× click',         type: 'click',    bid: null,          multi: 2,  bought: false, cond: s => s.totalCurry >= 10 },
-  { id: 'rack',      name: 'Spice Rack',      emoji: '🌿', cost: 500,    desc: '2× click',         type: 'click',    bid: null,          multi: 2,  bought: false, cond: s => s.totalCurry >= 100 },
-  { id: 'spoon',     name: 'Sacred Spoon',    emoji: '✨', cost: 5000,   desc: '2× click',         type: 'click',    bid: null,          multi: 2,  bought: false, cond: s => s.totalCurry >= 1000 },
-  { id: 'blessing',  name: "Amir's Blessing", emoji: '🙏', cost: 50000,  desc: '5× click',         type: 'click',    bid: null,          multi: 5,  bought: false, cond: s => s.totalCurry >= 10000 },
-  { id: 'godcurry',  name: "God's Own Curry", emoji: '⚡', cost: 500000, desc: '10× click',        type: 'click',    bid: null,          multi: 10, bought: false, cond: s => s.totalCurry >= 100000 },
-  { id: 'turbobike', name: 'Turbo Bike',      emoji: '💨', cost: 100,    desc: "2× Amir's Bike",   type: 'building', bid: 'bike',        multi: 2,  bought: false, cond: () => getB('bike').count >= 3 },
-  { id: 'flour',     name: 'Better Flour',    emoji: '🌾', cost: 1000,   desc: '2× Chapati Stand', type: 'building', bid: 'chapati',     multi: 2,  bought: false, cond: () => getB('chapati').count >= 3 },
-  { id: 'coal',      name: 'Premium Coal',    emoji: '♨️', cost: 5000,   desc: '2× Tandoor',       type: 'building', bid: 'tandoor',     multi: 2,  bought: false, cond: () => getB('tandoor').count >= 3 },
-  { id: 'michelin',  name: 'Michelin Star',   emoji: '⭐', cost: 20000,  desc: '2× Curry House',   type: 'building', bid: 'curryhouse',  multi: 2,  bought: false, cond: () => getB('curryhouse').count >= 3 },
-  { id: 'silkroad',  name: 'Silk Road',       emoji: '🐪', cost: 100000, desc: '2× Spice Market',  type: 'building', bid: 'spicemarket', multi: 2,  bought: false, cond: () => getB('spicemarket').count >= 3 },
-];
-
-// ============================================================
-//  MILESTONES
-// ============================================================
-const MILESTONES = [
-  { at: 100,        msg: '100 CURRY! Amir is proud, sir!' },
-  { at: 1000,       msg: '1,000 CURRY! You built different!' },
-  { at: 10000,      msg: '10K CURRY! I deliver your curry, sir!' },
-  { at: 100000,     msg: '100K CURRY! It\'s okay, sir!' },
-  { at: 1000000,    msg: '1 MILLION CURRY! The GOAT of curry!' },
-  { at: 1000000000, msg: '1 BILLION CURRY! LEGENDARY!' },
-];
-
-// ============================================================
-//  STATE
-// ============================================================
-const state = {
-  curry:            0,
-  totalCurry:       0,
-  clickMulti:       1,
-  nextMilestoneIdx: 0,
+const INGREDIENTS = {
+  onion:     { name: 'Onion',     emoji: '🧅', tier: 1 },
+  tomato:    { name: 'Tomato',    emoji: '🍅', tier: 1 },
+  chilli:    { name: 'Chilli',    emoji: '🌶️',  tier: 1 },
+  garlic:    { name: 'Garlic',    emoji: '🧄', tier: 1 },
+  potato:    { name: 'Potato',    emoji: '🥔', tier: 2 },
+  spinach:   { name: 'Spinach',   emoji: '🥬', tier: 2 },
+  paneer:    { name: 'Paneer',    emoji: '🧀', tier: 2 },
+  chicken:   { name: 'Chicken',   emoji: '🍗', tier: 2 },
+  butter:    { name: 'Butter',    emoji: '🧈', tier: 2 },
+  yogurt:    { name: 'Yogurt',    emoji: '🥛', tier: 3 },
+  lamb:      { name: 'Lamb',      emoji: '🥩', tier: 3 },
+  rice:      { name: 'Rice',      emoji: '🌾', tier: 3 },
+  spice_mix: { name: 'Spice Mix', emoji: '🫙', tier: 3 },
+  saffron:   { name: 'Saffron',   emoji: '🌸', tier: 4 },
+  gold_leaf: { name: 'Gold Leaf', emoji: '✨', tier: 4 },
 };
 
+const RECIPES = [
+  {
+    id: 'tadka_dal',
+    name: 'Tadka Dal',
+    emoji: '🍲',
+    ingredients: { onion: 3, tomato: 2, chilli: 1 },
+    value: 15,
+    unlockAt: 0,
+    description: 'Simple comfort food',
+  },
+  {
+    id: 'aloo_gobi',
+    name: 'Aloo Gobi',
+    emoji: '🥘',
+    ingredients: { potato: 3, onion: 2, chilli: 2, garlic: 1 },
+    value: 55,
+    unlockAt: 100,
+    description: 'The classic veggie',
+  },
+  {
+    id: 'palak_paneer',
+    name: 'Palak Paneer',
+    emoji: '🫕',
+    ingredients: { spinach: 4, paneer: 3, garlic: 2, spice_mix: 2 },
+    value: 220,
+    unlockAt: 500,
+    description: 'Creamy spinach & cheese',
+  },
+  {
+    id: 'butter_chicken',
+    name: 'Butter Chicken',
+    emoji: '🍛',
+    ingredients: { chicken: 4, tomato: 3, butter: 2, garlic: 2, spice_mix: 2 },
+    value: 700,
+    unlockAt: 2000,
+    description: 'The crowd favourite',
+  },
+  {
+    id: 'lamb_rogan_josh',
+    name: 'Lamb Rogan Josh',
+    emoji: '🍜',
+    ingredients: { lamb: 5, onion: 4, yogurt: 3, spice_mix: 3, garlic: 2 },
+    value: 3200,
+    unlockAt: 12000,
+    description: 'Kashmiri masterpiece',
+  },
+  {
+    id: 'biryani',
+    name: 'Royal Biryani',
+    emoji: '🍚',
+    ingredients: { rice: 6, lamb: 4, spice_mix: 4, yogurt: 3, saffron: 2 },
+    value: 16000,
+    unlockAt: 80000,
+    description: 'The king of dishes',
+  },
+  {
+    id: 'maharaja_feast',
+    name: "Maharaja's Feast",
+    emoji: '👑',
+    ingredients: { rice: 10, lamb: 8, chicken: 6, saffron: 5, gold_leaf: 3, spice_mix: 5 },
+    value: 120000,
+    unlockAt: 500000,
+    description: 'Fit for royalty',
+  },
+  {
+    id: 'gods_curry',
+    name: "God's Own Curry",
+    emoji: '🌟',
+    ingredients: { saffron: 20, gold_leaf: 15, spice_mix: 15, lamb: 15, butter: 10, yogurt: 10 },
+    value: 1500000,
+    unlockAt: 5000000,
+    description: 'The ultimate creation',
+  },
+];
+
+const STATIONS = [
+  {
+    id: 'prep_counter',
+    name: 'Prep Counter',
+    emoji: '🔪',
+    description: 'Auto-chops onions, tomatoes, chillies & garlic',
+    baseCost: 80,
+    produces: { onion: 1.5, tomato: 1.0, chilli: 0.8, garlic: 0.5 },
+    costMultiplier: 1.15,
+  },
+  {
+    id: 'spice_rack',
+    name: 'Spice Rack',
+    emoji: '🌶️',
+    description: 'Grinds fresh spice mix and chillies',
+    baseCost: 350,
+    produces: { spice_mix: 0.8, chilli: 1.0, garlic: 0.5 },
+    costMultiplier: 1.15,
+  },
+  {
+    id: 'veg_stand',
+    name: 'Vegetable Stand',
+    emoji: '🥬',
+    description: 'Delivers fresh potatoes & spinach',
+    baseCost: 1200,
+    produces: { potato: 1.5, spinach: 1.5, onion: 0.5 },
+    costMultiplier: 1.15,
+  },
+  {
+    id: 'tandoor',
+    name: 'Tandoor',
+    emoji: '🔥',
+    description: 'Fires up chicken & paneer',
+    baseCost: 4500,
+    produces: { chicken: 1.0, paneer: 0.8 },
+    costMultiplier: 1.15,
+  },
+  {
+    id: 'dairy_run',
+    name: 'Dairy Run',
+    emoji: '🐄',
+    description: 'Daily butter & yogurt delivery',
+    baseCost: 16000,
+    produces: { butter: 1.0, yogurt: 0.8 },
+    costMultiplier: 1.15,
+  },
+  {
+    id: 'butcher',
+    name: 'Butcher Shop',
+    emoji: '🥩',
+    description: 'Premium cuts of lamb & chicken',
+    baseCost: 60000,
+    produces: { lamb: 0.8, chicken: 1.5 },
+    costMultiplier: 1.15,
+  },
+  {
+    id: 'rice_paddies',
+    name: 'Rice Paddies',
+    emoji: '🌾',
+    description: 'Grows fragrant basmati rice',
+    baseCost: 220000,
+    produces: { rice: 1.5 },
+    costMultiplier: 1.15,
+  },
+  {
+    id: 'saffron_fields',
+    name: 'Saffron Fields',
+    emoji: '🌸',
+    description: 'Cultivates precious saffron & gold leaf',
+    baseCost: 900000,
+    produces: { saffron: 0.5, gold_leaf: 0.2 },
+    costMultiplier: 1.15,
+  },
+  {
+    id: 'master_chef',
+    name: 'Master Chef',
+    emoji: '👨‍🍳',
+    description: 'Auto-cooks your most valuable available recipe every 4 seconds',
+    baseCost: 3500000,
+    produces: {},
+    autoChef: true,
+    costMultiplier: 1.2,
+  },
+];
+
+const UPGRADES = [
+  {
+    id: 'sharp_knives',
+    name: 'Sharp Knives',
+    emoji: '🔪',
+    description: '×2 ingredients per tap',
+    cost: 250,
+    unlockAt: 50,
+    effect: { clickMultiplier: 2 },
+  },
+  {
+    id: 'turbo_prep',
+    name: 'Turbo Prep',
+    emoji: '⚡',
+    description: '×3 Prep Counter production',
+    cost: 5000,
+    unlockAt: 2000,
+    effect: { stationBoost: { prep_counter: 3 } },
+  },
+  {
+    id: 'fresh_market',
+    name: 'Fresh Market',
+    emoji: '🛒',
+    description: '×2 all station production',
+    cost: 10000,
+    unlockAt: 4000,
+    effect: { stationMultiplier: 2 },
+  },
+  {
+    id: 'family_recipes',
+    name: "Nana's Recipes",
+    emoji: '📖',
+    description: '×1.5 value of all dishes',
+    cost: 25000,
+    unlockAt: 10000,
+    effect: { recipeMultiplier: 1.5 },
+  },
+  {
+    id: 'golden_tandoor',
+    name: 'Golden Tandoor',
+    emoji: '✨',
+    description: '×3 Tandoor production',
+    cost: 80000,
+    unlockAt: 30000,
+    effect: { stationBoost: { tandoor: 3 } },
+  },
+  {
+    id: 'michelin_star',
+    name: 'Michelin Star',
+    emoji: '⭐',
+    description: '×3 value of all dishes',
+    cost: 150000,
+    unlockAt: 60000,
+    effect: { recipeMultiplier: 3 },
+  },
+  {
+    id: 'secret_spices',
+    name: 'Secret Spices',
+    emoji: '🌶️',
+    description: '×5 ingredients per tap',
+    cost: 500000,
+    unlockAt: 200000,
+    effect: { clickMultiplier: 5 },
+  },
+  {
+    id: 'empire_expansion',
+    name: 'Empire Expansion',
+    emoji: '🌍',
+    description: '×2 all production & ×2 all dish values',
+    cost: 2000000,
+    unlockAt: 800000,
+    effect: { stationMultiplier: 2, recipeMultiplier: 2 },
+  },
+];
+
+const MILESTONES = [
+  { at: 100,        text: '₹100 earned! The kitchen is alive! 🔥' },
+  { at: 1000,       text: '₹1,000! Word is spreading about your curry!' },
+  { at: 10000,      text: '₹10,000! You built different, sir!' },
+  { at: 100000,     text: '₹100K! The whole neighbourhood loves you!' },
+  { at: 1000000,    text: '₹1 MILLION! Curry Empire is REAL! 🏆' },
+  { at: 10000000,   text: '₹10 MILLION! You are a legend!' },
+  { at: 1000000000, text: "₹1 BILLION! GOD'S OWN CHEF! 🌟" },
+];
+
+const CLICK_INGREDIENTS = ['onion', 'tomato', 'chilli', 'garlic'];
+
+// =====================================================
+// STATE
+// =====================================================
+
+let state = {
+  rupees: 0,
+  totalRupees: 0,
+  dishesCooked: 0,
+  ingredients: {},
+  stations: {},
+  upgrades: {},
+  milestonesSeen: new Set(),
+  clickMultiplier: 1,
+  stationMultiplier: 1,
+  recipeMultiplier: 1,
+  stationBoosts: {},
+  combo: 0,
+  lastClickTime: 0,
+  autoChefAccum: 0,
+};
+
+let recentEarnings = [];
+let lastTick = 0;
 let gameStarted = false;
-const MAX_LIVES = 3;
-let lives = MAX_LIVES;
-const REVIVE_MAX = 2;
-let revivesBought = 0;
+let musicPlaying = false;
+let activeShopTab = 'stations';
 
-let shieldActive = false;
-let slowActive   = false;
-let slowTimeLeft = 0; // ms
+// =====================================================
+// INIT
+// =====================================================
 
-const getB         = id => BUILDINGS.find(b => b.id === id);
-const buildingCost = b  => Math.ceil(b.baseCost * Math.pow(1.15, b.count));
-const totalCps     = () => BUILDINGS.reduce((s, b) => s + b.count * b.baseCps * b.boost, 0);
-const clickValue   = () => Math.max(1, state.clickMulti);
-
-// ============================================================
-//  FORMATTING
-// ============================================================
-function fmt(n) {
-  n = Math.floor(n);
-  if (n < 1000)  return n.toString();
-  if (n < 1e6)   return (n/1e3).toFixed(1).replace(/\.0$/,'')  + 'K';
-  if (n < 1e9)   return (n/1e6).toFixed(1).replace(/\.0$/,'')  + 'M';
-  if (n < 1e12)  return (n/1e9).toFixed(1).replace(/\.0$/,'')  + 'B';
-  return               (n/1e12).toFixed(1).replace(/\.0$/,'')  + 'T';
+function init() {
+  Object.keys(INGREDIENTS).forEach(id => { state.ingredients[id] = 0; });
+  loadGame();
+  bindEvents();
+  renderAll();
 }
 
-function fmtCps(n) {
-  if (n === 0) return '0';
-  if (n < 1)   return n.toFixed(2);
-  if (n < 10)  return n.toFixed(1);
-  if (n < 1e3) return Math.round(n).toString();
-  return fmt(n);
+function bindEvents() {
+  document.getElementById('start-btn').addEventListener('click', startGame);
+  document.getElementById('click-zone').addEventListener('click', handleClick);
+  document.getElementById('kitchen-btn').addEventListener('click', openShop);
+  document.getElementById('shop-close').addEventListener('click', closeShop);
+  document.getElementById('shop-overlay').addEventListener('click', closeShop);
+  document.getElementById('music-btn').addEventListener('click', toggleMusic);
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeShopTab = btn.dataset.tab;
+      renderShop(activeShopTab);
+    });
+  });
 }
 
-// ============================================================
-//  COMBO SYSTEM
-// ============================================================
-let comboCount  = 0;
-let lastHitTime = 0;
-const COMBO_TIMEOUT = 1200; // ms without a hit before combo resets
-
-function getComboMulti() {
-  if (comboCount < 2)  return 1;
-  if (comboCount < 5)  return comboCount;      // ×2, ×3, ×4
-  if (comboCount < 10) return 5;               // ×5
-  if (comboCount < 20) return 10;              // ×10
-  return 20;                                   // ×20 cap
+function startGame() {
+  document.getElementById('start-screen').classList.add('hidden');
+  document.getElementById('game').classList.remove('hidden');
+  lastTick = Date.now();
+  gameStarted = true;
+  setInterval(gameTick, 100);
+  setInterval(saveGame, 30000);
 }
 
-function incrementCombo() {
-  comboCount++;
-  lastHitTime = Date.now();
-  updateComboDisplay();
-}
+// =====================================================
+// GAME LOOP
+// =====================================================
 
-function resetCombo() {
-  if (comboCount >= 3) flashComboBreak();
-  comboCount = 0;
-  updateComboDisplay();
-}
+function gameTick() {
+  const now = Date.now();
+  const dt = (now - lastTick) / 1000;
+  lastTick = now;
 
-function checkComboTimeout() {
-  if (comboCount > 0 && Date.now() - lastHitTime > COMBO_TIMEOUT) resetCombo();
-}
+  STATIONS.forEach(station => {
+    const count = state.stations[station.id] || 0;
+    if (!count) return;
 
-function updateComboDisplay() {
-  const el = document.getElementById('combo-display');
-  if (!el) return;
-  if (comboCount >= 2) {
-    const m = getComboMulti();
-    el.textContent   = '×' + m + ' COMBO!';
-    el.dataset.tier  = comboCount >= 20 ? 'max' : comboCount >= 10 ? 'high' : comboCount >= 5 ? 'mid' : 'low';
-    el.style.display = 'block';
-    el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
-  } else {
-    el.style.display = 'none';
-  }
-}
-
-function flashComboBreak() {
-  const el = document.getElementById('combo-display');
-  if (!el) return;
-  el.textContent   = '💔 COMBO LOST!';
-  el.dataset.tier  = 'lost';
-  el.style.display = 'block';
-  setTimeout(() => { if (comboCount === 0) el.style.display = 'none'; }, 700);
-}
-
-// ============================================================
-//  FLOAT TEXT HELPER
-// ============================================================
-function spawnFloat(x, y, text, isCombo, isMiss) {
-  const div = document.createElement('div');
-  div.className = 'float-text' + (isCombo ? ' float-combo' : '') + (isMiss ? ' float-miss' : '');
-  div.textContent = text;
-  div.style.left  = (x - 50) + 'px';
-  div.style.top   = (y - 10) + 'px';
-  document.body.appendChild(div);
-  setTimeout(() => div.remove(), 950);
-}
-
-// ============================================================
-//  RENDER
-// ============================================================
-function renderStats() {
-  const cps = fmtCps(totalCps());
-  document.getElementById('curry-count').textContent = fmt(state.curry);
-  document.getElementById('cps-display').textContent = cps + '/sec';
-  document.getElementById('shop-total').textContent  = fmt(state.totalCurry);
-  document.getElementById('click-val').textContent   = fmt(clickValue());
-  document.getElementById('shop-cps').textContent    = cps;
-  renderLives();
-}
-
-function renderLives() {
-  const el = document.getElementById('lives-display');
-  if (!el) return;
-  el.innerHTML =
-    '<span class="lf">♥</span>'.repeat(Math.max(0, lives)) +
-    '<span class="le">♥</span>'.repeat(Math.max(0, MAX_LIVES - lives));
-}
-
-function loseLife() {
-  if (!gameStarted || lives <= 0) return;
-  lives--;
-  renderLives();
-  const el = document.getElementById('lives-display');
-  if (el) { el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
-  if (lives <= 0) gameOver();
-}
-
-function gameOver() {
-  gameStarted = false;
-  if (bgMusic) {
-    bgMusic.volume = 0;
-    setTimeout(() => bgMusic.pause(), 600);
-  }
-  document.getElementById('amir-sprite').style.animationPlayState = 'paused';
-  document.getElementById('go-score').textContent = fmt(state.totalCurry);
-  document.getElementById('gameover-screen').style.display = 'flex';
-}
-
-function resetGame() {
-  localStorage.removeItem('cc-save');
-  window.location.reload();
-}
-
-function renderShop() {
-  // Upgrades
-  const upgEl = document.getElementById('upgrades-list');
-  const avail = UPGRADES.filter(u => !u.bought && u.cond(state));
-  if (!avail.length) {
-    upgEl.innerHTML = '<p class="empty-msg">Keep clicking to unlock!</p>';
-  } else {
-    upgEl.innerHTML = avail.map(u => {
-      const ok = state.curry >= u.cost;
-      return `<div class="shop-item${ok?' can-afford':''}" onclick="buyUpgrade('${u.id}')">
-        <span class="s-emoji">${u.emoji}</span>
-        <div class="s-info">
-          <div class="s-name">${u.name}</div>
-          <div class="s-desc">${u.desc}</div>
-          <span class="upg-tag">UPGRADE</span>
-        </div>
-        <div class="s-cost">🍛${fmt(u.cost)}</div>
-      </div>`;
-    }).join('');
-  }
-
-  // Power-ups
-  const powersEl = document.getElementById('powers-list');
-  if (powersEl) {
-    const items = [
-      {
-        emoji: '🛡️', name: "Amir's Shield",
-        desc: shieldActive ? 'Active — absorbs next hit' : 'Absorb the next obstacle hit',
-        cost: shieldCost(), active: shieldActive, disabled: shieldActive || !gameStarted,
-        fn: 'buyShield()',
-      },
-      {
-        emoji: '🐢', name: 'Slow Scroll',
-        desc: slowActive ? `Active — ${Math.ceil(slowTimeLeft / 1000)}s left` : 'Halve world speed for 6s',
-        cost: slowCost(), active: slowActive, disabled: slowActive || !gameStarted,
-        fn: 'buySlow()',
-      },
-      {
-        emoji: '💥', name: 'Curry Bomb',
-        desc: 'Blast all obstacles off-screen',
-        cost: bombCost(), active: false, disabled: !gameStarted,
-        fn: 'buyCurryBomb()',
-      },
-    ];
-    powersEl.innerHTML = items.map(item => {
-      const ok = !item.disabled && state.curry >= item.cost;
-      return `<div class="shop-item${ok ? ' can-afford' : ''}${item.active ? ' power-active' : ''}" onclick="${item.fn}">
-        <span class="s-emoji">${item.emoji}</span>
-        <div class="s-info">
-          <div class="s-name">${item.name}</div>
-          <div class="s-desc">${item.desc}</div>
-          <span class="upg-tag">POWER</span>
-        </div>
-        <div class="s-cost">${item.active ? '✓ ACTIVE' : '🍛' + fmt(item.cost)}</div>
-      </div>`;
-    }).join('');
-  }
-
-  // Revival
-  const revivalEl = document.getElementById('revival-list');
-  if (revivalEl) {
-    const remaining = REVIVE_MAX - revivesBought;
-    const cost = reviveCost();
-    if (lives >= MAX_LIVES) {
-      revivalEl.innerHTML = '<p class="empty-msg">Full health — no revival needed!</p>';
-    } else if (remaining <= 0) {
-      revivalEl.innerHTML = '<p class="empty-msg">No revivals remaining this run.</p>';
+    if (station.autoChef) {
+      state.autoChefAccum += dt * count;
+      if (state.autoChefAccum >= 4) {
+        state.autoChefAccum = 0;
+        autoCook();
+      }
     } else {
-      const ok = state.curry >= cost;
-      revivalEl.innerHTML = `<div class="shop-item${ok ? ' can-afford' : ''}" onclick="buyRevive()">
-        <span class="s-emoji">❤️</span>
-        <div class="s-info">
-          <div class="s-name">Second Wind</div>
-          <div class="s-desc">Restore 1 life · ${remaining} left this run</div>
-          <span class="upg-tag">REVIVAL</span>
-        </div>
-        <div class="s-cost">🍛${fmt(cost)}</div>
-      </div>`;
+      const boost = state.stationBoosts[station.id] || 1;
+      const mult = state.stationMultiplier * boost * count;
+      Object.entries(station.produces).forEach(([id, rate]) => {
+        state.ingredients[id] = (state.ingredients[id] || 0) + rate * mult * dt;
+      });
+    }
+  });
+
+  const cutoff = now - 10000;
+  recentEarnings = recentEarnings.filter(e => e.t > cutoff);
+
+  renderHUD();
+  renderInventory();
+  renderRecipes();
+
+  if (!document.getElementById('shop-panel').classList.contains('hidden')) {
+    renderShop(activeShopTab);
+  }
+}
+
+function autoCook() {
+  let best = null;
+  RECIPES.forEach(r => {
+    if (r.unlockAt > state.totalRupees) return;
+    if (!canCook(r)) return;
+    if (!best || r.value > best.value) best = r;
+  });
+  if (best) cookRecipe(best.id, true);
+}
+
+// =====================================================
+// CLICK
+// =====================================================
+
+function handleClick(e) {
+  const now = Date.now();
+  state.combo = now - state.lastClickTime < 1200 ? state.combo + 1 : 1;
+  state.lastClickTime = now;
+
+  const mult = comboMult();
+  const yieldAmt = state.clickMultiplier * mult;
+
+  CLICK_INGREDIENTS.forEach(id => {
+    state.ingredients[id] = (state.ingredients[id] || 0) + yieldAmt;
+  });
+
+  const chef = document.getElementById('chef-emoji');
+  chef.classList.remove('chop');
+  void chef.offsetWidth;
+  chef.classList.add('chop');
+
+  const picked = CLICK_INGREDIENTS[Math.floor(Math.random() * CLICK_INGREDIENTS.length)];
+  const label = INGREDIENTS[picked].emoji + (mult > 1 ? ` ×${mult}` : '');
+  showFloat(label, e.clientX, e.clientY);
+
+  if (mult > 1) {
+    const el = document.getElementById('combo-display');
+    el.textContent = `${mult}× COMBO!`;
+    el.className = mult >= 10 ? 'combo-fire' : mult >= 5 ? 'combo-hot' : 'combo-warm';
+    el.style.opacity = '1';
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.style.opacity = '0'; }, 900);
+  }
+}
+
+function comboMult() {
+  if (state.combo >= 20) return 10;
+  if (state.combo >= 10) return 5;
+  if (state.combo >= 5)  return 3;
+  if (state.combo >= 3)  return 2;
+  return 1;
+}
+
+// =====================================================
+// RECIPES
+// =====================================================
+
+function canCook(recipe) {
+  return Object.entries(recipe.ingredients).every(
+    ([id, need]) => Math.floor(state.ingredients[id] || 0) >= need
+  );
+}
+
+function cookRecipe(id, auto) {
+  const recipe = RECIPES.find(r => r.id === id);
+  if (!recipe || !canCook(recipe)) return;
+
+  Object.entries(recipe.ingredients).forEach(([ing, need]) => {
+    state.ingredients[ing] -= need;
+  });
+
+  const value = Math.round(recipe.value * state.recipeMultiplier);
+  state.rupees += value;
+  state.totalRupees += value;
+  state.dishesCooked++;
+  recentEarnings.push({ t: Date.now(), v: value });
+
+  if (!auto) {
+    const card = document.querySelector(`[data-recipe="${id}"]`);
+    if (card) {
+      const r = card.getBoundingClientRect();
+      showFloat(`+₹${fmt(value)}`, r.left + r.width / 2, r.top + 20);
+    }
+    const btn = document.querySelector(`[data-cook="${id}"]`);
+    if (btn) {
+      btn.classList.add('cook-pulse');
+      setTimeout(() => btn.classList.remove('cook-pulse'), 300);
     }
   }
 
-  // Buildings
-  document.getElementById('buildings-list').innerHTML = BUILDINGS.map(b => {
-    const cost = buildingCost(b);
-    const ok   = state.curry >= cost;
-    const sub  = b.count > 0
-      ? `<div class="s-count">×${b.count} · ${fmtCps(b.count*b.baseCps*b.boost)}/sec</div>`
-      : `<div class="s-desc">${b.desc}</div>`;
-    return `<div class="shop-item${ok?' can-afford':''}" onclick="buyBuilding('${b.id}')">
-      <span class="s-emoji">${b.emoji}</span>
-      <div class="s-info">
-        <div class="s-name">${b.name}</div>${sub}
+  checkMilestones();
+}
+
+// =====================================================
+// SHOP
+// =====================================================
+
+function buyStation(id) {
+  const station = STATIONS.find(s => s.id === id);
+  const count = state.stations[id] || 0;
+  const cost = stationCost(station, count);
+  if (state.rupees < cost) return;
+  state.rupees -= cost;
+  state.stations[id] = count + 1;
+}
+
+function buyUpgrade(id) {
+  const upgrade = UPGRADES.find(u => u.id === id);
+  if (!upgrade || state.upgrades[id] || state.rupees < upgrade.cost) return;
+  state.rupees -= upgrade.cost;
+  state.upgrades[id] = true;
+  applyEffect(upgrade.effect);
+}
+
+function applyEffect(effect) {
+  if (effect.clickMultiplier)   state.clickMultiplier   *= effect.clickMultiplier;
+  if (effect.stationMultiplier) state.stationMultiplier *= effect.stationMultiplier;
+  if (effect.recipeMultiplier)  state.recipeMultiplier  *= effect.recipeMultiplier;
+  if (effect.stationBoost) {
+    Object.entries(effect.stationBoost).forEach(([sid, mult]) => {
+      state.stationBoosts[sid] = (state.stationBoosts[sid] || 1) * mult;
+    });
+  }
+}
+
+function stationCost(station, count) {
+  return Math.floor(station.baseCost * Math.pow(station.costMultiplier, count));
+}
+
+// =====================================================
+// RENDER
+// =====================================================
+
+function renderAll() {
+  renderHUD();
+  renderInventory();
+  renderRecipes();
+}
+
+function renderHUD() {
+  document.getElementById('rupee-count').textContent = fmt(Math.floor(state.rupees));
+  const rps = recentEarnings.reduce((s, e) => s + e.v, 0) / 10;
+  document.getElementById('rps-display').textContent = rps >= 0.1 ? `₹${fmt(rps)} /sec` : '';
+  document.getElementById('dishes-cooked').textContent = fmt(state.dishesCooked);
+  document.getElementById('total-earned').textContent = fmt(Math.floor(state.totalRupees));
+}
+
+function renderInventory() {
+  const grid = document.getElementById('ingredient-grid');
+  const chips = [];
+
+  Object.entries(INGREDIENTS).forEach(([id, ing]) => {
+    const count = Math.floor(state.ingredients[id] || 0);
+    if (count === 0 && !isRelevant(id)) return;
+    chips.push(
+      `<div class="ing-chip${count === 0 ? ' ing-zero' : ''}">
+        <span class="ing-icon">${ing.emoji}</span>
+        <span class="ing-cnt">${count}</span>
+      </div>`
+    );
+  });
+
+  grid.innerHTML = chips.length
+    ? chips.join('')
+    : '<span class="pantry-empty">Tap the chef to gather ingredients!</span>';
+}
+
+function isRelevant(id) {
+  return RECIPES.some(r => r.unlockAt <= state.totalRupees && id in r.ingredients)
+      || STATIONS.some(s => (state.stations[s.id] || 0) > 0 && id in s.produces);
+}
+
+function renderRecipes() {
+  document.getElementById('recipe-list').innerHTML = RECIPES.map(recipe => {
+    const unlocked = state.totalRupees >= recipe.unlockAt;
+    if (!unlocked) {
+      return `<div class="recipe-card locked">
+        <span class="rc-emoji">🔒</span>
+        <div class="rc-info">
+          <div class="rc-name">${recipe.name}</div>
+          <div class="rc-unlock">Unlock at ₹${fmt(recipe.unlockAt)}</div>
+        </div>
+      </div>`;
+    }
+
+    const cookable = canCook(recipe);
+    const value = Math.round(recipe.value * state.recipeMultiplier);
+    const ingHtml = Object.entries(recipe.ingredients).map(([id, need]) => {
+      const have = Math.floor(state.ingredients[id] || 0);
+      return `<span class="ing-req ${have >= need ? 'have' : 'need'}">${INGREDIENTS[id].emoji}${need}</span>`;
+    }).join('');
+
+    return `<div class="recipe-card${cookable ? ' cookable' : ''}" data-recipe="${recipe.id}">
+      <span class="rc-emoji">${recipe.emoji}</span>
+      <div class="rc-info">
+        <div class="rc-name">${recipe.name}</div>
+        <div class="rc-ings">${ingHtml}</div>
+        <div class="rc-desc">${recipe.description}</div>
       </div>
-      <div class="s-cost">🍛${fmt(cost)}</div>
+      <div class="rc-action">
+        <div class="rc-value">₹${fmt(value)}</div>
+        <button
+          class="cook-btn${cookable ? '' : ' cant-cook'}"
+          data-cook="${recipe.id}"
+          ${cookable ? `onclick="cookRecipe('${recipe.id}')"` : 'disabled'}
+        >${cookable ? 'Cook!' : 'Need more'}</button>
+      </div>
     </div>`;
   }).join('');
 }
 
-function render() { renderStats(); renderShop(); }
+function renderShop(tab) {
+  const body = document.getElementById('shop-body');
 
-// ============================================================
-//  PURCHASES
-// ============================================================
-function buyBuilding(id) {
-  const b = getB(id), cost = buildingCost(b);
-  if (state.curry < cost) return;
-  state.curry -= cost;
-  b.count++;
-  render();
-}
-
-function reviveCost() {
-  return Math.max(200, Math.floor(state.totalCurry * 0.1)) * (revivesBought + 1);
-}
-
-function buyRevive() {
-  const cost = reviveCost();
-  if (lives >= MAX_LIVES || revivesBought >= REVIVE_MAX || state.curry < cost) return;
-  state.curry -= cost;
-  revivesBought++;
-  lives++;
-  renderLives();
-  render();
-}
-
-// ============================================================
-//  POWER-UPS
-// ============================================================
-function shieldCost() { return Math.max(300,  Math.floor(state.totalCurry * 0.08)); }
-function slowCost()   { return Math.max(500,  Math.floor(state.totalCurry * 0.12)); }
-function bombCost()   { return Math.max(1000, Math.floor(state.totalCurry * 0.20)); }
-
-function buyShield() {
-  const cost = shieldCost();
-  if (shieldActive || !gameStarted || state.curry < cost) return;
-  state.curry -= cost;
-  shieldActive = true;
-  document.getElementById('amir-char').classList.add('shielded');
-  updatePowerupHud();
-  render();
-}
-
-function buySlow() {
-  const cost = slowCost();
-  if (slowActive || !gameStarted || state.curry < cost) return;
-  state.curry -= cost;
-  slowActive   = true;
-  slowTimeLeft = 6000;
-  document.getElementById('slow-overlay').style.display = 'block';
-  updatePowerupHud();
-  render();
-}
-
-function buyCurryBomb() {
-  const cost = bombCost();
-  if (!gameStarted || state.curry < cost) return;
-  state.curry -= cost;
-  obstacles.forEach(o => o.el.remove());
-  obstacles.length = 0;
-  const layer = document.getElementById('obstacles-layer');
-  layer.classList.add('bomb-flash');
-  setTimeout(() => layer.classList.remove('bomb-flash'), 500);
-  render();
-}
-
-function updatePowerupHud() {
-  const el = document.getElementById('powerup-hud');
-  if (!el) return;
-  const parts = [];
-  if (shieldActive) parts.push('🛡️ SHIELD');
-  if (slowActive)   parts.push('🐢 ' + Math.ceil(slowTimeLeft / 1000) + 's');
-  el.textContent   = parts.join('  ·  ');
-  el.style.display = parts.length ? 'block' : 'none';
-}
-
-function buyUpgrade(id) {
-  const u = UPGRADES.find(u => u.id === id);
-  if (!u || u.bought || state.curry < u.cost) return;
-  state.curry -= u.cost;
-  u.bought = true;
-  if (u.type === 'click') {
-    state.clickMulti *= u.multi;
-  } else if (u.type === 'building') {
-    const b = getB(u.bid);
-    if (b) b.boost *= u.multi;
-  }
-  render();
-}
-
-// ============================================================
-//  CLICK HANDLER
-// ============================================================
-document.getElementById('amir-char').addEventListener('click', e => {
-  e.stopPropagation();
-
-  if (!gameStarted) { startGame(); return; }
-
-  doJump();
-  incrementCombo();
-  const multi = getComboMulti();
-  const val   = clickValue() * multi;
-  state.curry      += val;
-  state.totalCurry += val;
-
-  // Flash Amir
-  const el = document.getElementById('amir-char');
-  el.classList.add('hit');
-  setTimeout(() => el.classList.remove('hit'), 140);
-
-  // Floating text — show multiplier when combo active
-  const label = multi > 1 ? `+${fmt(val)} 🍛 ×${multi}` : `+${fmt(val)} 🍛`;
-  spawnFloat(e.clientX, e.clientY, label, multi > 1, false);
-
-  checkMilestones();
-  renderStats();
-  tryStartMusic();
-});
-
-// ============================================================
-//  JUMP PHYSICS
-// ============================================================
-const GROUND_H   = 58;   // must match CSS --ground-h
-const GRAVITY    = 0.7;  // px deceleration per frame-unit
-const JUMP_FORCE = 24;   // initial upward velocity
-
-let amirY     = 0;   // px above ground
-let amirVY    = 0;   // current vertical velocity
-let amirScale = 1.0; // shrinks as curry grows
-
-function applyAmirTransform() {
-  const el = document.getElementById('amir-char');
-  el.style.transform = `translateY(${-amirY}px) scale(${amirScale})`;
-  el.style.zIndex    = amirY > 20 ? '9' : '5';
-}
-
-function doJump() {
-  if (amirY > 4) return; // already airborne
-  amirVY = JUMP_FORCE;
-}
-
-function updateJump(dt) {
-  if (amirY <= 0 && amirVY <= 0) return;
-  const scale = dt / 16;
-  amirVY -= GRAVITY * scale;
-  amirY   = Math.max(0, amirY + amirVY * scale);
-  applyAmirTransform();
-  if (amirY <= 0) amirVY = 0;
-}
-
-// Auto-jump
-let autoJumpTimer = 0;
-let nextAutoJump  = 3000 + Math.random() * 2000;
-
-function updateAutoJump(dt) {
-  if (amirY > 4) { autoJumpTimer = 0; return; }
-  autoJumpTimer += dt;
-  if (autoJumpTimer >= nextAutoJump) {
-    doJump();
-    autoJumpTimer = 0;
-    // Jumps get more frequent as curry grows (3–5s → 0.8–1.5s at max)
-    const log = Math.log10(state.totalCurry + 1);
-    const minJ = Math.max(800,  3000 - log * 350);
-    const maxJ = Math.max(1500, 5000 - log * 500);
-    nextAutoJump = minJ + Math.random() * (maxJ - minJ);
-  }
-}
-
-// ============================================================
-//  OBSTACLES
-// ============================================================
-const OBS_TYPES = [
-  // Ground hazards — potholes (jump over them)
-  { type: 'pothole', width: 40,  speedM: 1.05, front: true  },
-  { type: 'pothole', width: 55,  speedM: 1.0,  front: true  },
-  { type: 'pothole', width: 70,  speedM: 0.95, front: true  },
-  { type: 'pothole', width: 85,  speedM: 0.9,  front: true  },
-  { type: 'pothole', width: 45,  speedM: 1.1,  front: true  },
-  { type: 'pothole', width: 100, speedM: 1.0,  front: true  },
-  // Background scenery — decorative only, no collision
-  { type: 'scenery', emoji: '🐄', size: 110, speedM: 0.65, front: false },
-  { type: 'scenery', emoji: '🐪', size: 100, speedM: 0.75, front: false },
-  { type: 'scenery', emoji: '🐫', size: 108, speedM: 0.7,  front: false },
-  { type: 'scenery', emoji: '🐘', size: 118, speedM: 0.6,  front: false },
-];
-
-let obstacles  = [];
-let obsTimer   = 0;
-let nextObs    = 2000;
-
-function worldSpeed() {
-  const base = Math.min(540, 160 + Math.log10(state.totalCurry + 1) * 75);
-  return slowActive ? base * 0.45 : base;
-}
-
-function obsInterval() {
-  // 1900ms → 350ms as curry grows — twice as many obstacles as before
-  return Math.max(350, 1900 - Math.log10(state.totalCurry + 1) * 220);
-}
-
-function spawnObstacle() {
-  const type   = OBS_TYPES[Math.floor(Math.random() * OBS_TYPES.length)];
-  const layer  = document.getElementById('obstacles-layer');
-  const el     = document.createElement('div');
-  const startX = window.innerWidth + 80;
-
-  if (type.type === 'pothole') {
-    el.className   = 'pothole';
-    el.style.width = type.width + 'px';
+  if (tab === 'stations') {
+    body.innerHTML = STATIONS.map(s => {
+      const count = state.stations[s.id] || 0;
+      const cost = stationCost(s, count);
+      const canAfford = state.rupees >= cost;
+      return `<div class="shop-item">
+        <div class="si-emoji">${s.emoji}</div>
+        <div class="si-info">
+          <div class="si-name">${s.name}${count ? ` <span class="si-badge">×${count}</span>` : ''}</div>
+          <div class="si-desc">${s.description}</div>
+        </div>
+        <button class="buy-btn${canAfford ? '' : ' cant-buy'}" ${canAfford ? '' : 'disabled'} onclick="buyStation('${s.id}')">
+          ₹${fmt(cost)}
+        </button>
+      </div>`;
+    }).join('');
   } else {
-    el.className      = 'obstacle';
-    el.textContent    = type.emoji;
-    el.style.fontSize = type.size + 'px';
-    el.style.bottom   = GROUND_H + 'px';
-    el.style.zIndex   = '3';
-  }
-
-  el.style.left = startX + 'px';
-  layer.appendChild(el);
-
-  obstacles.push({
-    el,
-    x:       startX,
-    speedM:  type.speedM,
-    front:   type.front,
-    visualH: type.type === 'pothole' ? 45 : 0,
-    visualW: type.type === 'pothole' ? type.width : Math.round((type.size || 100) * 0.7),
-    damaged: false,
-  });
-}
-
-function updateObstacles(dt) {
-  if (!gameStarted) return;
-  obsTimer += dt;
-  if (obsTimer >= nextObs) {
-    spawnObstacle();
-    obsTimer = 0;
-    nextObs  = obsInterval();
-  }
-
-  const spd = worldSpeed() * (dt / 1000);
-  for (let i = obstacles.length - 1; i >= 0; i--) {
-    const o = obstacles[i];
-    o.x -= spd * o.speedM;
-    o.el.style.left = o.x + 'px';
-    if (o.x < -150) {
-      o.el.remove();
-      obstacles.splice(i, 1);
-    }
+    const available = UPGRADES.filter(u => state.totalRupees >= u.unlockAt);
+    body.innerHTML = available.length ? available.map(u => {
+      const bought = !!state.upgrades[u.id];
+      const canAfford = !bought && state.rupees >= u.cost;
+      return `<div class="shop-item${bought ? ' si-bought' : ''}">
+        <div class="si-emoji">${u.emoji}</div>
+        <div class="si-info">
+          <div class="si-name">${u.name}</div>
+          <div class="si-desc">${u.description}</div>
+        </div>
+        ${bought
+          ? '<div class="si-owned">✓ Owned</div>'
+          : `<button class="buy-btn${canAfford ? '' : ' cant-buy'}" ${canAfford ? '' : 'disabled'} onclick="buyUpgrade('${u.id}')">₹${fmt(u.cost)}</button>`}
+      </div>`;
+    }).join('') : '<p class="shop-empty">Keep earning to unlock upgrades!</p>';
   }
 }
 
-// ============================================================
-//  POSITIONAL COLLISION — auto-damage when obstacle overlaps Amir on ground
-// ============================================================
-let hitInvincibleTime = 0;
+// =====================================================
+// UI HELPERS
+// =====================================================
 
-function checkObstacleCollisions() {
-  if (!gameStarted || hitInvincibleTime > 0) return;
-  const amirLeft  = window.innerWidth * 0.22;
-  const amirRight = amirLeft + 84;
-
-  for (const o of obstacles) {
-    if (!o.front || o.damaged) continue;
-    if (o.x + o.visualW < amirLeft - 15) continue;
-    if (o.x > amirRight + 15) continue;
-
-    o.damaged = true;          // mark on first entry — prevents landing-damage
-    if (amirY >= o.visualH) continue;  // already airborne, cleared safely
-    const fx = amirLeft + 42;
-    const fy = window.innerHeight - GROUND_H - amirY - 60;
-
-    if (shieldActive) {
-      shieldActive = false;
-      document.getElementById('amir-char').classList.remove('shielded');
-      o.el.classList.add('obstacle-hit');
-      setTimeout(() => o.el.classList.remove('obstacle-hit'), 350);
-      spawnFloat(fx, fy, '🛡️ BLOCKED!', true, false);
-      updatePowerupHud();
-      renderShop();
-      return;
-    }
-
-    hitInvincibleTime = 1000;
-    resetCombo();
-    spawnFloat(fx, fy, '💔 -1 LIFE!', false, true);
-    loseLife();
-    o.el.classList.add('obstacle-hit');
-    setTimeout(() => o.el.classList.remove('obstacle-hit'), 350);
-    return;
-  }
+function openShop() {
+  document.getElementById('shop-panel').classList.remove('hidden');
+  document.getElementById('shop-overlay').classList.remove('hidden');
+  renderShop(activeShopTab);
 }
 
-// ============================================================
-//  GOLDEN CURRY BOWL
-// ============================================================
-let goldenBowl      = null;
-let goldenBowlTimer = 0;
-let nextGoldenBowl  = 45000 + Math.random() * 45000;
-const GOLDEN_LIFETIME = 9000;
-
-function goldenBowlValue() {
-  return Math.max(500, Math.floor(totalCps() * 120));
+function closeShop() {
+  document.getElementById('shop-panel').classList.add('hidden');
+  document.getElementById('shop-overlay').classList.add('hidden');
 }
 
-function spawnGoldenBowl() {
-  if (goldenBowl) return;
-  const el  = document.createElement('div');
-  el.className  = 'golden-bowl';
-  el.textContent = '🍛';
-  const startX  = window.innerWidth + 80;
-  el.style.left = startX + 'px';
-  const val = goldenBowlValue();
-  el.addEventListener('click', e => {
-    e.stopPropagation();
-    if (!gameStarted || !goldenBowl) return;
-    state.curry      += val;
-    state.totalCurry += val;
-    spawnFloat(e.clientX, e.clientY, `✨ +${fmt(val)} 🍛 GOLDEN!`, true, false);
-    removeGoldenBowl();
-    checkMilestones();
-    renderStats();
-  });
-  document.getElementById('obstacles-layer').appendChild(el);
-  goldenBowl = { el, x: startX, timeLeft: GOLDEN_LIFETIME };
-  showMilestone('✨ GOLDEN CURRY! Quick, click it!');
+function showFloat(text, x, y) {
+  const el = document.createElement('div');
+  el.className = 'float-txt';
+  el.textContent = text;
+  el.style.cssText = `left:${x}px;top:${y}px`;
+  document.getElementById('float-layer').appendChild(el);
+  setTimeout(() => el.remove(), 1100);
 }
 
-function removeGoldenBowl() {
-  if (!goldenBowl) return;
-  goldenBowl.el.remove();
-  goldenBowl = null;
-}
-
-function updateGoldenBowl(dt) {
-  if (!gameStarted) return;
-  goldenBowlTimer += dt;
-  if (goldenBowlTimer >= nextGoldenBowl) {
-    spawnGoldenBowl();
-    goldenBowlTimer = 0;
-    nextGoldenBowl = 45000 + Math.random() * 45000;
-  }
-  if (!goldenBowl) return;
-  const spd = worldSpeed() * 0.7 * (dt / 1000);
-  goldenBowl.x -= spd;
-  goldenBowl.el.style.left = goldenBowl.x + 'px';
-  goldenBowl.timeLeft -= dt;
-  if (goldenBowl.timeLeft <= 0 || goldenBowl.x < -150) removeGoldenBowl();
-}
-
-// ============================================================
-//  AMIR SPEED / SIZE / FIRE — called from 500ms interval
-// ============================================================
-function updateAmirSpeed() {
-  const spd = worldSpeed();           // 140 → 420 px/s
-  const ratio = 140 / spd;           // 1 → 0.333
-  const dur   = Math.max(0.08, 0.3 * ratio).toFixed(3) + 's';
-  const sprite = document.getElementById('amir-sprite');
-  if (sprite) sprite.style.animationDuration = dur;
-  document.querySelectorAll('.a-arm-l, .a-arm-r, .a-leg-l, .a-leg-r, .a-shadow').forEach(el => {
-    el.style.animationDuration = dur;
-  });
-  const ground = document.getElementById('ground');
-  if (ground) ground.style.animationDuration = Math.max(0.18, 0.9 * ratio).toFixed(3) + 's';
-}
-
-function updateAmirSize() {
-  // Scale 1.0 → 0.42 as log10(totalCurry) grows 0 → 7
-  const newScale = Math.max(0.42, 1 - Math.log10(state.totalCurry + 1) * 0.083);
-  if (Math.abs(newScale - amirScale) > 0.004) {
-    amirScale = newScale;
-    applyAmirTransform();
-  }
-}
-
-function updateFire() {
-  const el = document.getElementById('amir-fire');
-  if (!el) return;
-  const t = state.totalCurry;
-  let size = 0;
-  if      (t >= 1000000) size = 88;
-  else if (t >= 100000)  size = 68;
-  else if (t >= 10000)   size = 52;
-  else if (t >= 1000)    size = 38;
-  else if (t >= 100)     size = 28;
-
-  if (size > 0) {
-    el.style.display  = 'block';
-    el.style.fontSize = size + 'px';
-    el.textContent    = '🔥';
-  } else {
-    el.style.display = 'none';
-  }
-}
-
-// ============================================================
-//  GAME LOOP  (requestAnimationFrame)
-// ============================================================
-let lastTs = null;
-
-function gameLoop(ts) {
-  if (!lastTs) lastTs = ts;
-  const dt = Math.min(ts - lastTs, 50); // cap at 50ms to handle tab focus-loss
-  lastTs = ts;
-
-  if (slowActive) {
-    slowTimeLeft -= dt;
-    if (slowTimeLeft <= 0) {
-      slowActive = false;
-      slowTimeLeft = 0;
-      document.getElementById('slow-overlay').style.display = 'none';
-    }
-    updatePowerupHud();
-  }
-
-  if (hitInvincibleTime > 0) hitInvincibleTime = Math.max(0, hitInvincibleTime - dt);
-
-  updateJump(dt);
-  updateAutoJump(dt);
-  updateObstacles(dt);
-  checkObstacleCollisions();
-  updateGoldenBowl(dt);
-  checkComboTimeout();
-
-  requestAnimationFrame(gameLoop);
-}
-
-requestAnimationFrame(gameLoop);
-
-// CPS income tick — every 100ms
-setInterval(() => {
-  if (!gameStarted) return;
-  const gain = totalCps() / 10;
-  if (gain > 0) {
-    state.curry      += gain;
-    state.totalCurry += gain;
-    checkMilestones();
-    renderStats();
-  }
-}, 100);
-
-// Shop re-render + world scaling — every 500ms
-setInterval(() => {
-  renderShop();
-  updateAmirSpeed();
-  updateAmirSize();
-  updateFire();
-}, 500);
-
-// ============================================================
-//  SHOP TOGGLE
-// ============================================================
-let shopOpen = false;
-
-function startGame() {
-  if (gameStarted) return;
-  gameStarted = true;
-  document.body.classList.remove('pre-start');
-  const screen = document.getElementById('start-screen');
-  if (screen) {
-    screen.classList.add('fade-out');
-    setTimeout(() => screen.remove(), 750);
-  }
-  tryStartMusic();
-}
-
-function toggleShop() {
-  if (!gameStarted) return;
-  shopOpen = !shopOpen;
-  document.getElementById('shop-panel').classList.toggle('open', shopOpen);
-  document.getElementById('shop-backdrop').classList.toggle('visible', shopOpen);
-  document.getElementById('shop-btn').textContent = shopOpen ? '✕ CLOSE' : '🛒 BAZAAR';
-  if (shopOpen) renderShop();
-}
-
-// ============================================================
-//  MILESTONES
-// ============================================================
 function checkMilestones() {
-  if (state.nextMilestoneIdx >= MILESTONES.length) return;
-  const m = MILESTONES[state.nextMilestoneIdx];
-  if (state.totalCurry >= m.at) {
-    state.nextMilestoneIdx++;
-    showMilestone(m.msg);
+  MILESTONES.forEach(m => {
+    if (state.totalRupees >= m.at && !state.milestonesSeen.has(m.at)) {
+      state.milestonesSeen.add(m.at);
+      const banner = document.getElementById('milestone-banner');
+      banner.textContent = m.text;
+      banner.classList.add('show');
+      clearTimeout(banner._t);
+      banner._t = setTimeout(() => banner.classList.remove('show'), 4000);
+    }
+  });
+}
+
+// =====================================================
+// MUSIC
+// =====================================================
+
+function toggleMusic() {
+  const audio = document.getElementById('bg-music');
+  const btn = document.getElementById('music-btn');
+  if (musicPlaying) {
+    audio.pause();
+    btn.textContent = '🔇';
+    musicPlaying = false;
+  } else {
+    audio.play().catch(() => {});
+    btn.textContent = '🎵';
+    musicPlaying = true;
   }
 }
 
-function showMilestone(msg) {
-  const el = document.getElementById('milestone');
-  el.textContent   = '🍛 ' + msg + ' 🍛';
-  el.style.display = 'block';
-  clearTimeout(el._t);
-  el._t = setTimeout(() => { el.style.display = 'none'; }, 4500);
-}
+// =====================================================
+// SAVE / LOAD
+// =====================================================
 
-// ============================================================
-//  SAVE / LOAD
-// ============================================================
 function saveGame() {
-  localStorage.setItem('cc-save', JSON.stringify({
-    curry:            state.curry,
-    totalCurry:       state.totalCurry,
-    clickMulti:       state.clickMulti,
-    nextMilestoneIdx: state.nextMilestoneIdx,
-    buildings: BUILDINGS.map(({ id, count, boost }) => ({ id, count, boost })),
-    upgrades:  UPGRADES.map(({ id, bought })         => ({ id, bought })),
+  if (!gameStarted) return;
+  localStorage.setItem('curryEmpire_v1', JSON.stringify({
+    rupees:            state.rupees,
+    totalRupees:       state.totalRupees,
+    dishesCooked:      state.dishesCooked,
+    ingredients:       state.ingredients,
+    stations:          state.stations,
+    upgrades:          state.upgrades,
+    milestonesSeen:    [...state.milestonesSeen],
+    clickMultiplier:   state.clickMultiplier,
+    stationMultiplier: state.stationMultiplier,
+    recipeMultiplier:  state.recipeMultiplier,
+    stationBoosts:     state.stationBoosts,
   }));
 }
 
 function loadGame() {
-  const raw = localStorage.getItem('cc-save');
-  if (!raw) return;
   try {
-    const d = JSON.parse(raw);
-    state.curry            = d.curry            || 0;
-    state.totalCurry       = d.totalCurry       || 0;
-    state.clickMulti       = d.clickMulti       || 1;
-    state.nextMilestoneIdx = d.nextMilestoneIdx || 0;
-    (d.buildings || []).forEach(sb => {
-      const b = getB(sb.id);
-      if (b) { b.count = sb.count || 0; b.boost = sb.boost || 1; }
+    const raw = localStorage.getItem('curryEmpire_v1');
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    Object.assign(state, {
+      rupees:            s.rupees            || 0,
+      totalRupees:       s.totalRupees       || 0,
+      dishesCooked:      s.dishesCooked      || 0,
+      ingredients:       { ...state.ingredients, ...(s.ingredients || {}) },
+      stations:          s.stations          || {},
+      upgrades:          s.upgrades          || {},
+      milestonesSeen:    new Set(s.milestonesSeen || []),
+      clickMultiplier:   s.clickMultiplier   || 1,
+      stationMultiplier: s.stationMultiplier || 1,
+      recipeMultiplier:  s.recipeMultiplier  || 1,
+      stationBoosts:     s.stationBoosts     || {},
     });
-    (d.upgrades || []).forEach(su => {
-      const u = UPGRADES.find(u => u.id === su.id);
-      if (u) u.bought = su.bought;
-    });
-  } catch { /* ignore corrupt saves */ }
+  } catch (_) {}
 }
 
-setInterval(saveGame, 30000);
-window.addEventListener('beforeunload', saveGame);
+// =====================================================
+// UTILS
+// =====================================================
 
-// ============================================================
-//  MUSIC — HTML5 Audio (works on all browsers including iOS Safari)
-//  audio.play() called within a user gesture is honoured on iOS;
-//  unlike YouTube IFrame postMessage calls, it runs in the same context.
-// ============================================================
-const bgMusic    = document.getElementById('bg-music');
-let musicOn      = true;
-let musicStarted = false;
-
-function tryStartMusic() {
-  if (musicStarted || !bgMusic) return;
-  bgMusic.volume = 0.55;
-  bgMusic.play().then(() => {
-    musicStarted = true;
-    document.getElementById('music-btn').classList.remove('needs-click');
-  }).catch(() => {});
+function fmt(n) {
+  if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+  return Math.floor(n).toString();
 }
 
-function toggleMusic() {
-  if (!bgMusic) return;
-  musicOn = !musicOn;
-  if (musicOn) {
-    bgMusic.volume = 0.55;
-    bgMusic.play().catch(() => {});
-    document.getElementById('music-btn').textContent = '♪ ON';
-  } else {
-    bgMusic.pause();
-    document.getElementById('music-btn').textContent = '♪ OFF';
-  }
-}
+// =====================================================
+// GO
+// =====================================================
 
-// ============================================================
-//  INIT
-// ============================================================
-loadGame();
-render();
-
-// Jump — Space bar or tap anywhere on the game world (Amir/obstacle clicks stop propagation)
-document.addEventListener('keydown', e => {
-  if (e.code === 'Space') { e.preventDefault(); if (gameStarted) doJump(); }
-});
-document.getElementById('game-world').addEventListener('click', () => {
-  if (gameStarted) doJump();
-});
-
-document.body.classList.add('pre-start');
-document.getElementById('music-btn').classList.add('needs-click');
+init();

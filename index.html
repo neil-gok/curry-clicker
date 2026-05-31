@@ -2,175 +2,96 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CURRY CLICKER</title>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Curry Empire</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+  <!-- Start screen -->
+  <div id="start-screen">
+    <div class="start-card">
+      <div class="start-logo">🍛</div>
+      <h1 class="start-title">CURRY EMPIRE</h1>
+      <p class="start-sub">Chop. Cook. Conquer.</p>
+      <div class="start-instructions">
+        <div class="instr-row"><span>👆</span><span>Tap the chef to chop ingredients</span></div>
+        <div class="instr-row"><span>🍲</span><span>Cook recipes to earn rupees</span></div>
+        <div class="instr-row"><span>🏪</span><span>Buy kitchen stations for idle income</span></div>
+        <div class="instr-row"><span>👑</span><span>Build the ultimate curry empire</span></div>
+      </div>
+      <button id="start-btn">Start Cooking!</button>
+    </div>
+  </div>
+
+  <!-- Main game -->
+  <div id="game" class="hidden">
+
+    <header>
+      <div class="hdr-left">
+        <span class="hdr-logo">🍛</span>
+        <span class="hdr-title">Curry Empire</span>
+      </div>
+      <div class="hdr-center">
+        <div class="rupee-display"><span class="rupee-sym">₹</span><span id="rupee-count">0</span></div>
+        <div id="rps-display"></div>
+      </div>
+      <div class="hdr-right">
+        <button id="kitchen-btn" class="hdr-btn">🏪</button>
+        <button id="music-btn" class="hdr-btn">🔇</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- Chef click zone -->
+      <section id="chef-section">
+        <div id="click-zone">
+          <div id="chef-emoji">👨‍🍳</div>
+          <div id="click-hint">Tap to chop!</div>
+        </div>
+        <div id="combo-display"></div>
+      </section>
+
+      <!-- Ingredient pantry -->
+      <section id="pantry-section">
+        <div class="section-title">🧺 Pantry</div>
+        <div id="ingredient-grid"></div>
+      </section>
+
+      <!-- Recipe menu -->
+      <section id="menu-section">
+        <div class="section-title">📋 Menu</div>
+        <div id="recipe-list"></div>
+      </section>
+    </main>
+
+    <div id="float-layer"></div>
+    <div id="milestone-banner"></div>
+  </div>
+
+  <!-- Shop overlay + drawer -->
+  <div id="shop-overlay" class="hidden"></div>
+  <div id="shop-panel" class="hidden">
+    <div class="shop-hdr">
+      <h2>🏪 Kitchen</h2>
+      <button id="shop-close">✕</button>
+    </div>
+    <div class="shop-tabs">
+      <button class="tab-btn active" data-tab="stations">Stations</button>
+      <button class="tab-btn" data-tab="upgrades">Upgrades</button>
+    </div>
+    <div id="shop-stats">
+      <span>Dishes cooked: <b id="dishes-cooked">0</b></span>
+      <span>Total earned: <b>₹<span id="total-earned">0</span></b></span>
+    </div>
+    <div id="shop-body"></div>
+  </div>
+
   <audio id="bg-music" loop preload="none">
     <source src="https://dn710707.ca.archive.org/0/items/Punjabi_Mc_Mundian_To_Bach_Ke/Punjabi_Mc_Mundian_To_Bach_Ke.mp4" type="video/mp4">
   </audio>
-
-  <!-- ===== HEADER / HUD ===== -->
-  <header>
-    <div id="hud-left">
-      <span id="game-title">🍛 CURRY CLICKER</span>
-      <span id="hud-stats">
-        <span id="curry-count">0</span> CURRY
-        <span class="sep">|</span>
-        <span id="cps-display">0/sec</span>
-        <span class="sep">|</span>
-        <span id="lives-display"></span>
-      </span>
-    </div>
-    <div id="hud-right">
-      <button id="shop-btn" onclick="toggleShop()">🛒 BAZAAR</button>
-      <button id="music-btn" onclick="toggleMusic()">♪ ON</button>
-    </div>
-  </header>
-
-  <!-- ===== GAME WORLD ===== -->
-  <div id="game-world">
-
-    <!-- Distant skyline silhouettes -->
-    <div id="bg-silhouettes"></div>
-
-    <!-- Scrolling ground -->
-    <div id="ground"></div>
-
-    <!-- Combo counter -->
-    <div id="combo-display"></div>
-
-    <!-- Active power-up indicator -->
-    <div id="powerup-hud"></div>
-
-    <!-- Slow-scroll blue tint overlay -->
-    <div id="slow-overlay"></div>
-
-    <!-- Obstacles container (JS-managed) -->
-    <div id="obstacles-layer"></div>
-
-    <!-- AMIR — CSS cartoon character -->
-    <div id="amir-char">
-      <div id="amir-sprite">
-
-        <!-- Head -->
-        <div class="a-head">
-          <div class="a-cap"><div class="a-cap-dot"></div></div>
-          <div class="a-eye a-eye-l"></div>
-          <div class="a-eye a-eye-r"></div>
-          <div class="a-brow a-brow-l"></div>
-          <div class="a-brow a-brow-r"></div>
-          <div class="a-mustache"></div>
-          <div class="a-smile"></div>
-        </div>
-
-        <!-- Body -->
-        <div class="a-body-row">
-          <div class="a-arm a-arm-l"></div>
-          <div class="a-torso">
-            <div class="a-ue">UE</div>
-            <div class="a-stripe"></div>
-          </div>
-          <div class="a-bag">
-            <div class="a-bag-handle"></div>
-            <div class="a-bag-icon">🍛</div>
-          </div>
-          <div class="a-arm a-arm-r"></div>
-        </div>
-
-        <!-- Legs -->
-        <div class="a-legs">
-          <div class="a-dhoti"></div>
-          <div class="a-leg a-leg-l"><div class="a-shoe"></div></div>
-          <div class="a-leg a-leg-r"><div class="a-shoe"></div></div>
-        </div>
-
-      </div>
-      <div class="a-shadow"></div>
-    </div>
-    <div id="amir-fire"></div>
-
-  </div>
-
-  <!-- ===== SHOP PANEL — slide-out drawer ===== -->
-  <div id="shop-backdrop" onclick="toggleShop()"></div>
-
-  <div id="shop-panel">
-    <div id="shop-header">
-      <span>🛒 THE CURRY BAZAAR</span>
-      <button onclick="toggleShop()">✕ CLOSE</button>
-    </div>
-
-    <div id="shop-stats">
-      <div>Total curry: <span id="shop-total">0</span></div>
-      <div>Per click:   <span id="click-val">1</span></div>
-      <div>Per second:  <span id="shop-cps">0</span></div>
-    </div>
-
-    <div id="shop-scroll">
-      <div class="sec-label">⚡ UPGRADES</div>
-      <div id="upgrades-list"></div>
-      <div class="sec-label">🔮 POWERS</div>
-      <div id="powers-list"></div>
-      <div class="sec-label">❤️ REVIVAL</div>
-      <div id="revival-list"></div>
-      <div class="sec-label">🏗 BUILDINGS</div>
-      <div id="buildings-list"></div>
-    </div>
-  </div>
-
-  <!-- ===== START SCREEN ===== -->
-  <div id="start-screen">
-    <div id="start-hero">
-      <div id="start-title">🍛 CURRY CLICKER</div>
-      <div id="start-sub">India's spiciest idle runner</div>
-    </div>
-    <div id="start-instructions">
-      <div class="instr-row">
-        <span class="instr-key">CLICK AMIR</span>
-        <span class="instr-val">earn curry 🍛</span>
-      </div>
-      <div class="instr-row">
-        <span class="instr-key">AVOID OBSTACLES</span>
-        <span class="instr-val">each hit costs a life ❤️</span>
-      </div>
-      <div class="instr-row">
-        <span class="instr-key">SPACE / TAP SKY</span>
-        <span class="instr-val">jump over obstacles 🦘</span>
-      </div>
-      <div class="instr-row">
-        <span class="instr-key">3 LIVES</span>
-        <span class="instr-val">lose them all = game over 💀</span>
-      </div>
-      <div class="instr-row">
-        <span class="instr-key">BAZAAR 🛒</span>
-        <span class="instr-val">spend curry on upgrades</span>
-      </div>
-      <div class="instr-row">
-        <span class="instr-key">COMBO CLICKS</span>
-        <span class="instr-val">multiply your earnings ⚡</span>
-      </div>
-    </div>
-    <div id="start-cta-wrap">
-      <div id="start-cta">CLICK AMIR TO BEGIN!</div>
-      <div id="start-arrow">▼</div>
-    </div>
-  </div>
-
-  <!-- ===== GAME OVER SCREEN ===== -->
-  <div id="gameover-screen">
-    <div id="gameover-card">
-      <div id="gameover-title">GAME OVER</div>
-      <div id="gameover-sub">Amir has collapsed from the chaos, sir!</div>
-      <div id="gameover-score">Total curry earned: <span id="go-score">0</span> 🍛</div>
-      <button id="gameover-btn" onclick="resetGame()">▶ PLAY AGAIN</button>
-    </div>
-  </div>
-
-  <div id="milestone"></div>
 
   <script src="game.js"></script>
 </body>
